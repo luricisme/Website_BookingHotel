@@ -1,0 +1,31 @@
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { Response } from 'express';
+import { Booking } from '../booking/entities/booking.entity';
+import { BookingDetail } from '../booking_detail/entities/booking_detail.entity';
+import { Repository } from 'typeorm';
+import { BookingRoom } from '../booking_room/entities/booking_room.entity';
+import { Payment } from './entities/payment.entity';
+import { RoomType } from '../room_type/entites/room_type.entity';
+import { MinioService } from '@/minio/minio.service';
+import { User } from '../user/entities/user.entity';
+import { Room } from '../room/entities/room.entity';
+import { Hotel } from '../hotel/entities/hotel.entity';
+export declare class PaymentService {
+    private readonly bookingRepository;
+    private readonly bookingDetailRepository;
+    private readonly bookingRoomRepository;
+    private readonly hotelRepository;
+    private readonly userRepository;
+    private readonly roomRepository;
+    private readonly paymentRepository;
+    private readonly roomTypeRepository;
+    private readonly minioService;
+    constructor(bookingRepository: Repository<Booking>, bookingDetailRepository: Repository<BookingDetail>, bookingRoomRepository: Repository<BookingRoom>, hotelRepository: Repository<Hotel>, userRepository: Repository<User>, roomRepository: Repository<Room>, paymentRepository: Repository<Payment>, roomTypeRepository: Repository<RoomType>, minioService: MinioService);
+    deleteCookie(res: Response): Promise<void>;
+    create(createPaymentDto: CreatePaymentDto): string;
+    findAll(): string;
+    findOne(id: number): string;
+    update(id: number, updatePaymentDto: UpdatePaymentDto): string;
+    remove(id: number): string;
+}

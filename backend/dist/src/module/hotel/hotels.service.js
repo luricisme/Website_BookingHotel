@@ -35,9 +35,6 @@ let HotelsService = class HotelsService {
         this.locationService = locationService;
         this.roomtypeService = roomtypeService;
     }
-    create(createHotelDto) {
-        return 'This action adds a new hotel';
-    }
     async findOneByOwnerId(ownerId) {
         const queryRunner = this.dataSource.createQueryRunner();
         const res = await queryRunner.manager.query(`
@@ -86,9 +83,6 @@ let HotelsService = class HotelsService {
                 message: 'Internal server error',
             }, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-    update(id, updateHotelDto) {
-        return `This action updates a #${id} hotel`;
     }
     async remove(id) {
         try {
@@ -223,7 +217,9 @@ let HotelsService = class HotelsService {
                 .where('hotel.status = :status', { status: 'approved' })
                 .groupBy('hotel.id')
                 .addGroupBy('location.id')
-                .setParameters({ checkInDate, checkOutDate });
+                .setParameters({ checkInDate, checkOutDate })
+                .orderBy('averagerating', 'DESC')
+                .addOrderBy('hotel.star', 'DESC');
             if (city) {
                 const normalizedCity = removeDiacritics(city);
                 queryBuilder.andWhere('LOWER(UNACCENT(location.city)) = :city', {

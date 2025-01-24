@@ -1,6 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
 import { CreateHotelDto } from './dto/create-hotel.dto';
-import { UpdateHotelDto } from './dto/update-hotel.dto';
 import { DataSource, Repository } from 'typeorm';
 import { Hotel } from './entities/hotel.entity';
 import { RoomType } from '../room_type/entites/room_type.entity';
@@ -21,7 +20,6 @@ export declare class HotelsService {
     private readonly locationService;
     private readonly roomtypeService;
     constructor(dataSource: DataSource, hotelRepository: Repository<Hotel>, imageService: ImageService, roomRepository: Repository<Room>, roomTypeRepository: Repository<RoomType>, minioService: MinioService, locationService: LocationsService, roomtypeService: RoomTypeService);
-    create(createHotelDto: CreateHotelDto): string;
     findOneByOwnerId(ownerId: number): Promise<any>;
     findAll(req: {
         query: {
@@ -43,7 +41,6 @@ export declare class HotelsService {
             location: any;
         }[];
     }>;
-    update(id: number, updateHotelDto: UpdateHotelDto): string;
     remove(id: number): Promise<{
         status: number;
         message: string;

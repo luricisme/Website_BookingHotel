@@ -1,12 +1,10 @@
 import { HotelsService } from './hotels.service';
 import { CreateHotelDto } from './dto/create-hotel.dto';
-import { UpdateHotelDto } from './dto/update-hotel.dto';
 import { SearchHotelDto } from './dto/search-hotel.dto';
 import { DetailHotelDto } from './dto/detail-hotel.dto';
 export declare class HotelsController {
     private readonly hotelsService;
     constructor(hotelsService: HotelsService);
-    create(createHotelDto: CreateHotelDto): string;
     findAll(req: any): Promise<{
         page: 1;
         per_page: 10;
@@ -18,25 +16,6 @@ export declare class HotelsController {
             hotelierName: any;
             location: any;
         }[];
-    }>;
-    addBasicInfo(userId: string, createHotelDto: CreateHotelDto): Promise<{
-        status: number;
-        message: string;
-        hotel: any;
-    }>;
-    uploadImages(files: Express.Multer.File[], hotelId: string): Promise<{
-        status: number;
-        message: string;
-        images: any[];
-    }>;
-    addPaymentMethod(hotelId: string, body: any): Promise<{
-        status: number;
-        mesasge: string;
-    }>;
-    update(id: string, updateHotelDto: UpdateHotelDto): string;
-    remove(id: string): Promise<{
-        status: number;
-        message: string;
     }>;
     recommendedHotel(userId: string): Promise<{
         status_code: import("@nestjs/common").HttpStatus;
@@ -99,6 +78,24 @@ export declare class HotelsController {
                 flexible_price: any;
             }[];
         };
+    }>;
+    addBasicInfo(userId: string, createHotelDto: CreateHotelDto): Promise<{
+        status: number;
+        message: string;
+        hotel: any;
+    }>;
+    uploadImages(files: Express.Multer.File[], hotelId: string): Promise<{
+        status: number;
+        message: string;
+        images: any[];
+    }>;
+    addPaymentMethod(hotelId: string, body: any): Promise<{
+        status: number;
+        mesasge: string;
+    }>;
+    remove(id: string): Promise<{
+        status: number;
+        message: string;
     }>;
     totalDashboardRequest(): Promise<{
         status: number;

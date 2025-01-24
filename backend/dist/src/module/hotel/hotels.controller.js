@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const public_1 = require("../../helpers/decorator/public");
 const hotels_service_1 = require("./hotels.service");
 const create_hotel_dto_1 = require("./dto/create-hotel.dto");
-const update_hotel_dto_1 = require("./dto/update-hotel.dto");
 const search_hotel_dto_1 = require("./dto/search-hotel.dto");
 const detail_hotel_dto_1 = require("./dto/detail-hotel.dto");
 const platform_express_1 = require("@nestjs/platform-express");
@@ -27,11 +26,17 @@ let HotelsController = class HotelsController {
     constructor(hotelsService) {
         this.hotelsService = hotelsService;
     }
-    create(createHotelDto) {
-        return this.hotelsService.create(createHotelDto);
-    }
     findAll(req) {
         return this.hotelsService.findAll(req);
+    }
+    async recommendedHotel(userId) {
+        return await this.hotelsService.getTopTenRatingHotel(+userId);
+    }
+    async findAvailableHotels(userId, searchHotelDto) {
+        return await this.hotelsService.findAvailableHotels(searchHotelDto, +userId);
+    }
+    async findOne(id, detailHotelDto) {
+        return await this.hotelsService.findOne(id, detailHotelDto);
     }
     async addBasicInfo(userId, createHotelDto) {
         return await this.hotelsService.addBasicInfo(createHotelDto, userId);
@@ -46,20 +51,8 @@ let HotelsController = class HotelsController {
     async addPaymentMethod(hotelId, body) {
         return await this.hotelsService.addPaymentMethod(hotelId, body);
     }
-    update(id, updateHotelDto) {
-        return this.hotelsService.update(+id, updateHotelDto);
-    }
     remove(id) {
         return this.hotelsService.remove(+id);
-    }
-    async recommendedHotel(userId) {
-        return await this.hotelsService.getTopTenRatingHotel(+userId);
-    }
-    async findAvailableHotels(userId, searchHotelDto) {
-        return await this.hotelsService.findAvailableHotels(searchHotelDto, +userId);
-    }
-    async findOne(id, detailHotelDto) {
-        return await this.hotelsService.findOne(id, detailHotelDto);
     }
     async totalDashboardRequest() {
         return await this.hotelsService.totalRequest();
@@ -73,13 +66,6 @@ let HotelsController = class HotelsController {
 };
 exports.HotelsController = HotelsController;
 __decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_hotel_dto_1.CreateHotelDto]),
-    __metadata("design:returntype", void 0)
-], HotelsController.prototype, "create", null);
-__decorate([
     (0, common_1.Get)('getAll'),
     (0, roles_1.Roles)('admin'),
     __param(0, (0, common_1.Req)()),
@@ -87,6 +73,32 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], HotelsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('recommended-hotel/:userId'),
+    (0, public_1.Public)(),
+    __param(0, (0, common_1.Param)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], HotelsController.prototype, "recommendedHotel", null);
+__decorate([
+    (0, common_1.Get)('search/:userId'),
+    (0, public_1.Public)(),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, search_hotel_dto_1.SearchHotelDto]),
+    __metadata("design:returntype", Promise)
+], HotelsController.prototype, "findAvailableHotels", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, public_1.Public)(),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, detail_hotel_dto_1.DetailHotelDto]),
+    __metadata("design:returntype", Promise)
+], HotelsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)('add/basicInfo/:userId'),
     (0, public_1.Public)(),
@@ -119,14 +131,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], HotelsController.prototype, "addPaymentMethod", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_hotel_dto_1.UpdateHotelDto]),
-    __metadata("design:returntype", void 0)
-], HotelsController.prototype, "update", null);
-__decorate([
     (0, common_1.Delete)(':id'),
     (0, roles_1.Roles)('admin'),
     __param(0, (0, common_1.Param)('id')),
@@ -134,32 +138,6 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], HotelsController.prototype, "remove", null);
-__decorate([
-    (0, common_1.Get)('recommended-hotel/:userId'),
-    (0, public_1.Public)(),
-    __param(0, (0, common_1.Param)('userId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], HotelsController.prototype, "recommendedHotel", null);
-__decorate([
-    (0, common_1.Get)('search/:userId'),
-    (0, public_1.Public)(),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, search_hotel_dto_1.SearchHotelDto]),
-    __metadata("design:returntype", Promise)
-], HotelsController.prototype, "findAvailableHotels", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    (0, public_1.Public)(),
-    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, detail_hotel_dto_1.DetailHotelDto]),
-    __metadata("design:returntype", Promise)
-], HotelsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Get)('admin/dashboard/t/request'),
     (0, public_1.Public)(),

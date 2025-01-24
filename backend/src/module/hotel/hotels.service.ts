@@ -8,12 +8,10 @@ import { CreateHotelDto } from './dto/create-hotel.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-
 import { Hotel } from './entities/hotel.entity';
 import { RoomType } from '../room_type/entites/room_type.entity';
 import { Room } from '../room/entities/room.entity';
 import { MinioService } from '@/minio/minio.service';
-
 import { NotFoundException } from '@nestjs/common';
 import { SearchHotelDto } from './dto/search-hotel.dto';
 import { DetailHotelDto } from './dto/detail-hotel.dto';
@@ -44,9 +42,6 @@ export class HotelsService {
     private readonly roomtypeService: RoomTypeService,
   ) {}
 
-  create(createHotelDto: CreateHotelDto) {
-    return 'This action adds a new hotel';
-  }
   async findOneByOwnerId(ownerId: number) {
     const queryRunner = this.dataSource.createQueryRunner();
     const res = await queryRunner.manager.query(`
@@ -116,10 +111,6 @@ export class HotelsService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-  }
-
-  update(id: number, updateHotelDto: UpdateHotelDto) {
-    return `This action updates a #${id} hotel`;
   }
 
   async remove(id: number) {
@@ -253,7 +244,7 @@ export class HotelsService {
         .leftJoinAndSelect('hotel.locations', 'location')
         .leftJoin('hotel.reviews', 'review')
         .leftJoin('hotel.roomTypes', 'roomType')
-        .leftJoin('roomType.rooms', 'room') // Join thông qua bảng roomType
+        .leftJoin('roomType.rooms', 'room') 
         .leftJoin('hotel.bookings', 'booking')
         .leftJoin('booking.bookingDetails', 'bookingdetail')
         .select([
@@ -287,7 +278,9 @@ export class HotelsService {
         .where('hotel.status = :status', { status: 'approved' })
         .groupBy('hotel.id')
         .addGroupBy('location.id')
-        .setParameters({ checkInDate, checkOutDate });
+        .setParameters({ checkInDate, checkOutDate })
+        .orderBy('averagerating', 'DESC') // Sắp xếp theo cả hai cái luôn, rating trung bình và star
+        .addOrderBy('hotel.star', 'DESC'); 
 
       // Test trả về
       // "ARRAY_AGG(DISTINCT CASE WHEN room.status = 'available' THEN jsonb_build_object('id', room.id, 'name', room.name, 'type', room.type, 'hotelId', room.hotelId) END) AS availablerooms"
@@ -300,6 +293,7 @@ export class HotelsService {
         });
       }
 
+      // Nếu có số lượng phòng 2 thì duyệt qua
       if (roomType2) {
         queryBuilder.andWhere(
           (subQuery) => {
@@ -328,6 +322,7 @@ export class HotelsService {
         );
       }
 
+      // Nếu có số lượng phòng 4 thì duyệt qua
       if (roomType4) {
         queryBuilder.andWhere(
           (subQuery) => {
@@ -469,14 +464,13 @@ export class HotelsService {
   async findOne(id: number, detailHotelDto: DetailHotelDto) {
     const { checkInDate, checkOutDate, roomType2, roomType4 } = detailHotelDto;
     try {
-      // console.log(`Finding hotel with ID: ${id}`);
       const hotel = await this.hotelRepository
         .createQueryBuilder('hotel')
         .leftJoinAndSelect('hotel.images', 'image')
         .leftJoinAndSelect('hotel.locations', 'location')
         .leftJoin('hotel.reviews', 'review')
         .leftJoin('hotel.roomTypes', 'roomType')
-        .leftJoin('roomType.rooms', 'room') // Join thông qua bảng roomType
+        .leftJoin('roomType.rooms', 'room')
         .leftJoin('hotel.bookings', 'booking')
         .leftJoin('booking.bookingDetails', 'bookingdetail')
         .select([

@@ -24,4 +24,8 @@ export default defineConfig({
         },
     },
     assetsInclude: ["**/*.m4v"],
+    server: {
+        port: 3000,
+        open: true,
+    },
 });

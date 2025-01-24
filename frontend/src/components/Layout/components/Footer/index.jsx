@@ -1,34 +1,67 @@
 import React from "react";
 import "./Footer.scss"; // Import your styles here
+import icons from "~/assets/icon";
 
 const Footer = () => {
     return (
         <div className="footer">
             <div className="footer-content row">
-                <div className="footer-left col-7 px-5 pt-5 pb-3">
-                    <h1 className="mb-4 fw-bold" style={{ fontSize: "30px" }}>BookaStay</h1>
-                    <p className="mb-3">
-                        BookaStay is an online platform designed to provide convenient and fast hotel booking services. It allows users to easily search, compare, and book hotels according to their needs, from budget accommodations to luxury options. 
-                    </p>
-                </div>
-                <div className="footer-right col-5 px-5 pt-5 pb-3">
-                    <h2 className="mb-4 fs-1">Menu</h2>
-                    <ul>
+                {/* Hỗ trợ */}
+                <div className="col-md-4 my-2 p-5">
+                    <h2 className="fw-bold">Help</h2>
+                    <ul className="list-unstyled mt-4">
                         <li>
-                            <a href="">Home</a>
+                            <img
+                                src={icons.phoneIcon}
+                                alt="Phone"
+                                className="icon me-3"
+                            />
+                            Hotline: 1900 686868</li>
+                        <li>
+                            Hỗ trợ khách hàng:{" "}
+                            <a href="mailto:help@bookastay.vn" className="text-decoration-none text-info">
+                                help@bookastay.vn
+                            </a>
                         </li>
                         <li>
-                            <a href="">About Us</a>
-                        </li>
-                        <li>
-                            <a href="">Our privacy</a>
+                            Liên hệ hợp tác:{" "}
+                            <a href="mailto:support@bookastay.vn" className="text-decoration-none text-info">
+                                support@bookastay.vn
+                            </a>
                         </li>
                     </ul>
                 </div>
+
+                {/* Về chúng tôi */}
+                <div className="col-md-4 my-2 p-5">
+                    <h2 className="fw-bold">Giới thiệu</h2>
+                    <ul className="list-unstyled mt-4">
+                        <li>
+                            <button className="text-light text-start p-0">About Us</button>
+                        </li>
+                        <li>
+                            <button className="text-light text-start p-0">Regulations on BookaStay</button>
+                        </li>
+                        <li>
+                            <button className="text-light text-start p-0">Connect with us</button>
+                        </li>
+                        <li>
+                            <button className="text-light text-start p-0">Complaint handling policy</button>
+                        </li>
+                    </ul>
+                </div>
+
+                {/* Đối tác thanh toán */}
+                <div className="col-md-3 my-2 p-5">
+                    <h2 className="fw-bold">Đối tác thanh toán</h2>
+                    <div className="d-flex flex-wrap gap-2 mt-4">
+                        <img src="https://play-lh.googleusercontent.com/uCtnppeJ9ENYdJaSL5av-ZL1ZM1f3b35u9k8EOEjK3ZdyG509_2osbXGH5qzXVmoFv0" alt="MoMo" className="img-fluid rounded" style={{ width: "50px" }} />
+                    </div>
+                </div>
             </div>
-            <div className="footer-bottom d-flex justify-content-between mt-5 pb-2 px-5">
-                <p className="ms-5 ps-3">© 2024 Capybara. All Rights Reserved.</p>
-                <p className="me-5 pe-5">Developed by: Capybara Team</p>
+            <div className="footer-bottom d-flex justify-content-between mt-4">
+                <p className="pb-2">© 2025 Capybara. All Rights Reserved.</p>
+                <p className="pb-2">Developed by: Capybara Team</p>
             </div>
         </div>
     );

@@ -7,9 +7,6 @@ export class CreateDiscountDto extends OmitType(PartialType(Discount), [
   'id',
   'hotel'
 ]) {
-    @IsNotEmpty()
-    code: string;
-
     @IsOptional()
     status: string;
 

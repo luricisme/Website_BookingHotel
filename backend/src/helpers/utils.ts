@@ -1,4 +1,6 @@
 import { Injectable } from "@nestjs/common";
+import { v4 as uuidv4 } from 'uuid';
+
 
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -25,4 +27,8 @@ export class ResponseDto<T> {
         public message: string,
         public data: T
     ) {}
+}
+
+export const generatingRandomCode = (length: number) => {
+    return uuidv4().split('-').join('').slice(0, length).toUpperCase()
 }

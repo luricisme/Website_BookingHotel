@@ -39,7 +39,7 @@ export class DiscountController {
     async updateDiscount(@Param('id') id: string, @Body() updateDiscountDto: UpdateDiscountDto) {
         try {
             const newDiscount = await this.discountService.updateDiscount(+id, updateDiscountDto);
-            return new ResponseDto(200, "Successfully", newDiscount);
+            return new ResponseDto(200, "Successfully", null);
         } catch (error) {
             return new ResponseDto(500, error.message, null);
         }

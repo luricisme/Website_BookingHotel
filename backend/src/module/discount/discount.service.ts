@@ -4,6 +4,7 @@ import { Discount } from './entities/discount.entity';
 import { Repository } from 'typeorm';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
+import { generatingRandomCode } from '@/helpers/utils';
 
 @Injectable()
 export class DiscountService {
@@ -17,7 +18,8 @@ export class DiscountService {
     }
 
     async createDiscount(req: any, createDiscountDto: CreateDiscountDto) {
-        const discount = {...createDiscountDto, hotel: req.user.hotel};
+        const code = generatingRandomCode(6);
+        const discount = {code, ...createDiscountDto, hotel: req.user.hotel};
         return await this.discountRepository.save(discount);
     }
 

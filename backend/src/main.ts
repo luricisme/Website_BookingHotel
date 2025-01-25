@@ -4,6 +4,7 @@ import { logger } from './logger/logger.fn.middleware';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -24,8 +25,17 @@ async function bootstrap() {
     }),
   );
   app.setGlobalPrefix('api', { exclude: ['/callback'] });
-  console.log(new Date().toString());
   //app.use(logger); //use global middleware
+
+  const configDocument = new DocumentBuilder()
+    .setTitle('BookaStay API')
+    .setDescription('The BookaStay API Document')
+    .setVersion('1.0')
+    .addTag('bookastay')
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, configDocument);
+  SwaggerModule.setup('api-docs', app, documentFactory);
+
   await app.listen(port);
 }
 bootstrap();

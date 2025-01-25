@@ -1,5 +1,6 @@
 import { Booking } from "@/module/booking/entities/booking.entity";
 import { BookingDetail } from "@/module/booking_detail/entities/booking_detail.entity";
+import { Discount } from "@/module/discount/entities/discount.entity";
 import { Image } from "@/module/image/entities/image.entity";
 import { Location } from "@/module/location/entities/location.entity";
 import { Report } from "@/module/report/entities/report.entity";
@@ -71,4 +72,7 @@ export class Hotel {
 
     @OneToMany(() => Booking, (booking) => booking.hotel)
     bookings: Booking[];
+
+    @OneToMany(() => Discount, (discount) => discount.hotel)
+    discounts: Discount[];
 }

@@ -19,3 +19,10 @@ export const comparePassword = async (plainPassword : string, hashPassord: strin
     }
 }
 
+export class ResponseDto<T> {
+    constructor(
+        public statusCode: number,
+        public message: string,
+        public data: T
+    ) {}
+}

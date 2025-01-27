@@ -87,11 +87,13 @@ export class UserService {
       SELECT 
         h.*, 
         MIN(rt.price) AS price,
-        json_agg(i.url) AS images
+        json_agg(i.url) AS images,
+        avg(r.rating) AS rating
       FROM hotel h
       JOIN "user_favouriteHotel" uf ON uf."hotelId" = h.id
       LEFT JOIN room_type rt ON rt."hotelId" = h.id
       LEFT JOIN image i ON i."hotelId" = h.id
+      LEFT JOIN review r on r."hotelId" = h.id
       WHERE uf."userId" = $1
       GROUP BY h.id
       ORDER BY ${sortBy} ${order}

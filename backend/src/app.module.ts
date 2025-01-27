@@ -2,9 +2,6 @@ import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/c
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './module/user/users.module';
-import { LoggerMiddleware } from './logger/logger.middleware';
-import { UserController } from './module/user/user.controller';
-import { logger } from './logger/logger.fn.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
@@ -33,6 +30,7 @@ import { BookingRoomModule } from './module/booking_room/booking_room.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DailyCheckService } from './helpers/DailyCheckService';
 import { RolesGuard } from './auth/guard/role.guard';
+import { DiscountModule } from './module/discount/discount.module';
 
 @Module({
   imports: [
@@ -103,6 +101,7 @@ import { RolesGuard } from './auth/guard/role.guard';
     RoomTypeModule,
     BookingDetailModule,
     BookingRoomModule,
+    DiscountModule,
     ScheduleModule.forRoot()
   ],
   controllers: [AppController],

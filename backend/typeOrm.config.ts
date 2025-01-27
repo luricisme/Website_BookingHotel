@@ -2,6 +2,7 @@ import { Bill } from "@/module/bill/entities/bill.entity";
 import { Booking } from "@/module/booking/entities/booking.entity";
 import { BookingDetail } from "@/module/booking_detail/entities/booking_detail.entity";
 import { BookingRoom } from "@/module/booking_room/entities/booking_room.entity";
+import { Discount } from "@/module/discount/entities/discount.entity";
 import { Hotel } from "@/module/hotel/entities/hotel.entity";
 import { Image } from "@/module/image/entities/image.entity";
 import { Location } from "@/module/location/entities/location.entity";
@@ -17,12 +18,29 @@ import { ConfigService } from "@nestjs/config";
 import { DataSource } from "typeorm";
 // const configService = new ConfigService();
 export default new DataSource({
-    type: 'postgres',
-    host: "88.222.212.40",
-    port: 5432,
-    username: "bookastaydata",
-    password: "bookastaydata",
-    database: "bookastay",
-    migrations: ["./migrations/**"],
-    entities: [User, Bill, Booking, Hotel, Location, Payment, Report, Review, Room, Service, Image, Role, RoomType, BookingDetail, BookingRoom],
+  type: "postgres",
+  host: "88.222.212.40",
+  port: 5432,
+  username: "bookastaydata",
+  password: "bookastaydata",
+  database: "bookastay",
+  migrations: ["./migrations/**"],
+  entities: [
+    User,
+    Bill,
+    Booking,
+    Hotel,
+    Location,
+    Payment,
+    Report,
+    Review,
+    Room,
+    Service,
+    Image,
+    Role,
+    RoomType,
+    BookingDetail,
+    BookingRoom,
+    Discount,
+  ],
 });

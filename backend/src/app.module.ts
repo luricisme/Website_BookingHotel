@@ -31,6 +31,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { DailyCheckService } from './helpers/DailyCheckService';
 import { RolesGuard } from './auth/guard/role.guard';
 import { DiscountModule } from './module/discount/discount.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -102,7 +103,8 @@ import { DiscountModule } from './module/discount/discount.module';
     BookingDetailModule,
     BookingRoomModule,
     DiscountModule,
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
+    EventsModule
   ],
   controllers: [AppController],
   providers: [

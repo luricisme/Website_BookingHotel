@@ -5,6 +5,14 @@ import { Discount } from '../entities/discount.entity';
 
 export class CreateDiscountDto extends OmitType(PartialType(Discount), ['id', 'hotel']) {
     @ApiProperty({
+        description: 'Code of the discount.',
+        example: 'DISCOUNT13524',
+        required: false,
+    })
+    @IsOptional()
+    code: string;
+
+    @ApiProperty({
         description: 'Status of the discount, can be active or inactive.',
         example: 'active',
         required: false,

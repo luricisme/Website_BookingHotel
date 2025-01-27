@@ -18,7 +18,10 @@ export class DiscountService {
     }
 
     async createDiscount(req: any, createDiscountDto: CreateDiscountDto) {
-        const code = generatingRandomCode(6);
+        let code = createDiscountDto.code;
+        if (!code) {
+            code = generatingRandomCode(10);
+        }
         const discount = {code, ...createDiscountDto, hotel: req.user.hotel};
         return await this.discountRepository.save(discount);
     }

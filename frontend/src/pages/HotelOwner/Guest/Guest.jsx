@@ -309,6 +309,8 @@ const Guest = () => {
                     title="Notice"
                     content="You have not registered any hotel yet. Please register your hotel first."
                     closeable={false}
+                    onCancel={() => navigate("/hotel-owner/login")}
+                    maskClosable={false}
                     onOk={() => navigate("/hotel-owner/register-hotel")}
                 >
                     <p>You have not registered any hotel yet. Please register your hotel first.</p>

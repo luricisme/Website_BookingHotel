@@ -14,8 +14,20 @@ import { Modal } from "react-bootstrap";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import staticImages from "~/assets/image";
+import { LoadingOutlined } from "@ant-design/icons";
+import ReviewSection from "~/components/ReviewCard/ReviewSection";
+
+// Import Swiper React components và các module
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+
+// Import style
+import "swiper/css";
+import "swiper/css/navigation";
+
 
 import axios from "~/utils/axiosCustomize";
+import {Spin} from "antd";
 
 const HotelDetails = () => {
     const { t } = useTranslation();
@@ -219,7 +231,19 @@ const HotelDetails = () => {
         fetchHotelDetails();
     }, [id, location.state]);
 
-    if (!isLoaded) return <div>Loading...</div>;
+    if (!isLoaded)
+        return <Spin style={{ display: "block", margin: "200px auto" }}
+                indicator={
+                    <LoadingOutlined
+                        style={{
+                            fontSize: 50,
+                            fontWeight: "bold",
+                        }}
+                        spin
+                    />
+                }
+                size="large"
+            ></Spin>;
 
     if (!hotelDetails) return <div>No details available</div>;
 
@@ -547,47 +571,7 @@ const HotelDetails = () => {
                             {t("hotelDetail.customerReviews")}
                         </p>
                         {/* Reviews Section */}
-                        <div className="reviews-section">
-                            {reviews.length > 0 ? (
-                                reviews.map((review) => (
-                                    <div className="review-card" key={review.id}>
-                                        <div className="profile-pic">
-                                            <img
-                                                src={review.avatar}
-                                                alt="Profile"
-                                                className="avatar-image"
-                                            />
-                                        </div>
-                                        <div className="name mb-2 fs-2 fw-bold">{review.name}</div>
-                                        <div className="stars">
-                                            {Array.from({ length: 5 }).map((_, index) => {
-                                                const isFullStar = review.rate >= index + 1;
-                                                const isHalfStar =
-                                                    review.rate > index && review.rate < index + 1;
-                                                return isFullStar ? (
-                                                    <img
-                                                        key={index}
-                                                        src={icons.starYellowIcon}
-                                                        alt="Star"
-                                                        className="star-icon"
-                                                    />
-                                                ) : (
-                                                    <img
-                                                        key={index}
-                                                        src={icons.starEmptyIcon}
-                                                        alt="Empty Star"
-                                                        className="star-gray-icon"
-                                                    />
-                                                );
-                                            })}
-                                        </div>
-                                        <div className="comment">{review.comment}</div>
-                                    </div>
-                                ))
-                            ) : (
-                                <p>No reviews available.</p>
-                            )}
-                        </div>
+                        <ReviewSection reviews={reviews} />
                     </div>
                 </div>
             </div>

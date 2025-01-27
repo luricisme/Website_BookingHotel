@@ -556,41 +556,7 @@ const Reserve = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                {/* <div className="col">
-                                                        <div className="mb-4">
-                                                            <label
-                                                                htmlFor="reserveDiscountInput"
-                                                                className="form-label"
-                                                            >
-                                                                Discount (optional)
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                name="discount"
-                                                                value={formik.values.discount}
-                                                                onChange={formik.handleChange}
-                                                                className={`form-control form-control-lg fs-4 `}
-                                                                id="reserveDiscountInput"
-                                                                placeholder="Enter your discount code"
-                                                            />
-                                                        </div>
-                                                    </div> */}
                                             </div>
-
-                                            {/* <div className="form-check">
-                                                    <input
-                                                        className="form-check-input"
-                                                        type="checkbox"
-                                                        value=""
-                                                        id="flexCheckDefault"
-                                                    />
-                                                    <label
-                                                        className="form-check-label"
-                                                        htmlFor="flexCheckDefault"
-                                                    >
-                                                        Agree to our privacy
-                                                    </label>
-                                                </div> */}
 
                                             <div className="separate"></div>
 
@@ -610,35 +576,6 @@ const Reserve = () => {
                                                     name="specialRequest"
                                                 ></textarea>
                                             </div>
-
-                                            {/* <div className="row row-cols-2">
-                                                    <div className="col">
-                                                        <label className="form-label">
-                                                            Your estimated arrival time (optional):
-                                                        </label>
-                                                        <DatePicker
-                                                            value={formik.values.arrivalTime}
-                                                            format="MM/dd/yyyy HH:mm"
-                                                            size="lg"
-                                                            locale={{
-                                                                sunday: `${t("calendar.sunday")}`,
-                                                                monday: `${t("calendar.monday")}`,
-                                                                tuesday: `${t("calendar.tuesday")}`,
-                                                                wednesday: `${t("calendar.wednesday")}`,
-                                                                thursday: `${t("calendar.thursday")}`,
-                                                                friday: `${t("calendar.friday")}`,
-                                                                saturday: `${t("calendar.saturday")}`,
-                                                                ok: `${t("calendar.ok")}`,
-                                                                today: `${t("calendar.today")}`,
-                                                                yesterday: `${t("calendar.yesterday")}`,
-                                                                hours: `${t("calendar.hours")}`,
-                                                                minutes: `${t("calendar.minutes")}`,
-                                                                seconds: `${t("calendar.seconds")}`,
-                                                            }}
-                                                            style={{ width: "100%" }}
-                                                        />
-                                                    </div>
-                                                </div> */}
                                         </form>
                                     </>
                                 )}

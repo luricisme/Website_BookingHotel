@@ -171,20 +171,6 @@ const Room = () => {
             title: "Status",
             key: "status",
             dataIndex: "status",
-            // filters: [
-            //     {
-            //         text: "Available",
-            //         value: "AVAILABLE",
-            //     },
-            //     {
-            //         text: "Booked",
-            //         value: "BOOKED",
-            //     },
-            //     {
-            //         text: "Pending",
-            //         value: "PENDING",
-            //     },
-            // ],
             render: (status) => (
                 <>
                     {status.map((tag) => {

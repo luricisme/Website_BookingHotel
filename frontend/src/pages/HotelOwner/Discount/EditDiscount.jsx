@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, InputNumber, DatePicker, Select, Button, message } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 import moment from "moment";
+import { updateDiscount } from "../../../services/apiService";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -59,8 +60,9 @@ const EditDiscount = ({ record, onSuccess }) => {
             delete formData.dateRange;
 
             // Call API to update discount
-            // const response = await updateDiscount(formData);
-            console.log("Update form:", formData);
+            const { id: discountId, ...updateData } = formData;
+            const response = await updateDiscount(discountId, updateData);
+            console.log("Update form:", response);
 
             message.success("Discount updated successfully");
             setIsModalOpen(false);

@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Modal, Space, Table, Button, Popconfirm } from "antd";
+import { Modal, Space, Table, Button, Popconfirm, message } from "antd";
 import { QuestionCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import AddDiscount from "./AddDiscount";
 import { useNavigate } from "react-router-dom";
 import EditDiscount from "./EditDiscount";
-import { getDiscounts } from "../../../services/apiService";
+import { deleteDiscount, getDiscounts } from "../../../services/apiService";
 import { Capitalize } from "../../../utils/stringUtils";
 import { formatDate } from "../../../utils/datetime";
 
@@ -93,10 +93,9 @@ const Discount = () => {
             render: (text, record) => (
                 <Space size="small">
                     <EditDiscount
-                        record={record}
+                        record={{ ...record, type: Capitalize(record.type) }}
                         onSuccess={() => {
-                            // Refresh discount list
-                            // fetchDiscounts();
+                            fetchDiscounts();
                         }}
                     />
                     <Popconfirm
@@ -107,15 +106,17 @@ const Discount = () => {
                         cancelText="No"
                         onConfirm={async () => {
                             console.log("Delete record", record);
-                            // try {
-                            //     const res = await deleteRoom(record.key);
-                            //     if (res && +res.status === 200) {
-                            //         toast.success("Discount deleted successfully");
-                            //         fetchRooms();
-                            //     }
-                            // } catch (error) {
-                            //     toast.error("Failed to delete discount");
-                            // }
+                            try {
+                                const res = await deleteDiscount(record.id);
+                                if (res && +res.statusCode === 200) {
+                                    message.success("Discount deleted successfully");
+                                    fetchDiscounts();
+                                } else {
+                                    message.error("Failed to delete discount");
+                                }
+                            } catch (error) {
+                                message.error("Failed to delete discount");
+                            }
                         }}
                     >
                         <Button

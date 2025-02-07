@@ -263,6 +263,14 @@ const createDiscount = async (data) => {
     return await axios.post("/discounts/create", persistedData);
 };
 
+const updateDiscount = async (discountId, updateData) => {
+    return await axios.patch(`/discounts/update/${discountId}`, updateData);
+};
+
+const deleteDiscount = async (discountId) => {
+    return await axios.delete(`/discounts/delete/${discountId}`);
+};
+
 // Guest
 const updateStatus = async (reservationId, status) => {
     return await axios.patch(
@@ -312,4 +320,6 @@ export {
     updateHotelRequestStatus,
     createDiscount,
     getDiscounts,
+    updateDiscount,
+    deleteDiscount,
 };

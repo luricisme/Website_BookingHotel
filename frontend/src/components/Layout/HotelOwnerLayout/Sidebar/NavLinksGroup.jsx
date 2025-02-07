@@ -2,7 +2,8 @@ import styled from "styled-components";
 import { IoHome } from "react-icons/io5";
 import { FaBookmark } from "react-icons/fa";
 import { IoPeople } from "react-icons/io5";
-import { MdRoomPreferences } from "react-icons/md";
+import { MdRoomPreferences, MdDiscount } from "react-icons/md";
+import { FaFile } from "react-icons/fa";
 
 import NavLink from "./NavLink";
 
@@ -50,9 +51,14 @@ const links = [
     },
     {
         to: "/hotel-owner/report",
-        icon: FaBookmark,
+        icon: FaFile,
         label: "Report",
-    }
+    },
+    {
+        to: "/hotel-owner/discount",
+        icon: MdDiscount,
+        label: "Discount",
+    },
 ];
 
 const NavLinksGroup = (props) => {

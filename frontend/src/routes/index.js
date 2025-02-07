@@ -26,6 +26,7 @@ import {
     Login as HotelOwnerLogin,
     Register as HotelOwnerRegister,
     Report,
+    Discount,
 } from "~/pages/HotelOwner";
 import Unauthorized from "~/pages/Unauthorized/Unauthorized";
 
@@ -163,6 +164,12 @@ const publicRoutes = [
     {
         path: "/hotel-owner/report",
         component: Report,
+        layout: HotelOwnerLayout,
+        requiredRole: ["hotelier"],
+    },
+    {
+        path: "/hotel-owner/discount",
+        component: Discount,
         layout: HotelOwnerLayout,
         requiredRole: ["hotelier"],
     },

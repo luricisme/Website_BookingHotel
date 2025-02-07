@@ -171,20 +171,6 @@ const Room = () => {
             title: "Status",
             key: "status",
             dataIndex: "status",
-            // filters: [
-            //     {
-            //         text: "Available",
-            //         value: "AVAILABLE",
-            //     },
-            //     {
-            //         text: "Booked",
-            //         value: "BOOKED",
-            //     },
-            //     {
-            //         text: "Pending",
-            //         value: "PENDING",
-            //     },
-            // ],
             render: (status) => (
                 <>
                     {status.map((tag) => {
@@ -322,6 +308,8 @@ const Room = () => {
                     title="Notice"
                     content="You have not registered any hotel yet. Please register your hotel first."
                     closeable={false}
+                    onCancel={() => navigate("/hotel-owner/login")}
+                    maskClosable={false}
                     onOk={() => navigate("/hotel-owner/register-hotel")}
                 >
                     <p>You have not registered any hotel yet. Please register your hotel first.</p>

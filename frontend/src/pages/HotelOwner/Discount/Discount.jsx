@@ -1,11 +1,6 @@
 import React from "react";
 import { Modal, Space, Table, Button, Popconfirm } from "antd";
-import {
-    QuestionCircleOutlined,
-    EditOutlined,
-    DeleteOutlined,
-    PlusOutlined,
-} from "@ant-design/icons";
+import { QuestionCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import AddDiscount from "./AddDiscount";
 import { useNavigate } from "react-router-dom";

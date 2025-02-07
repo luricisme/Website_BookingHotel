@@ -23,7 +23,7 @@ const EditDiscount = ({ record, onSuccess }) => {
                 dateRange: [moment(record.start_at), moment(record.end_at)],
             });
         }
-    }, [isModalOpen, record]);
+    }, [form, isModalOpen, record]);
 
     const showModal = () => {
         setIsModalOpen(true);

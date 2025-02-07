@@ -101,7 +101,6 @@ const EditDiscount = ({ record, onSuccess }) => {
                         name="code"
                         label="Discount Code"
                         rules={[
-                            { required: true, message: "Please input discount code!" },
                             { min: 3, message: "Code must be at least 3 characters!" },
                             { max: 20, message: "Code cannot be longer than 20 characters!" },
                         ]}

@@ -13,3 +13,5 @@ export { default as OrderDetail } from "./OrderDetail/OrderDetail";
 export { default as Login } from "./Login/login";
 
 export { default as Register } from "./Register/register";
+
+export { default as Report } from "./Report/Report";

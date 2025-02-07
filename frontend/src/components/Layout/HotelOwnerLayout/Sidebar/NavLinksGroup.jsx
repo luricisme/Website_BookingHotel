@@ -48,6 +48,11 @@ const links = [
         icon: MdRoomPreferences,
         label: "Room Type",
     },
+    {
+        to: "/hotel-owner/report",
+        icon: FaBookmark,
+        label: "Report",
+    }
 ];
 
 const NavLinksGroup = (props) => {

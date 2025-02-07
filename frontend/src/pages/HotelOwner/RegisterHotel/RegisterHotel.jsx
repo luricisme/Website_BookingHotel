@@ -1,7 +1,6 @@
 import { useEffect, useReducer, useState } from "react";
 import { Button, Result } from "antd";
 import styled from "styled-components";
-import axios from "axios";
 
 import Stepper from "~/components/Stepper/Stepper";
 import {
@@ -14,6 +13,7 @@ import "./RegisterHotel.scss";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { doGetAccount } from "~/redux/action/accountAction";
+import axios from "~/utils/axiosCustomize";
 
 const StyledStepLabel = styled.div`
     font-size: 2.8rem;

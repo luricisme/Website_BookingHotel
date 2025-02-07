@@ -65,6 +65,8 @@ const Dashboard = () => {
                     title="Notice"
                     content="You have not registered any hotel yet. Please register your hotel first."
                     closeable={false}
+                    onCancel={() => navigate("/hotel-owner/login")}
+                    maskClosable={false}
                     onOk={() => navigate("/hotel-owner/register-hotel")}
                 >
                     <p>You have not registered any hotel yet. Please register your hotel first.</p>
@@ -88,9 +90,6 @@ const Dashboard = () => {
                             {userInfo.hotel?.detailAddress || "N/A"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Star">{userInfo.hotel?.star}</Descriptions.Item>
-                        <Descriptions.Item label="Status">
-                            {userInfo.hotel?.status}
-                        </Descriptions.Item>
                     </Descriptions>
                 </div>
 

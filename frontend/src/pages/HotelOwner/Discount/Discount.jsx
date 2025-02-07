@@ -14,26 +14,18 @@ const Discount = () => {
 
     const navigate = useNavigate();
 
-    const mockData = [
-        {
-            key: "1",
-            code: "DISCOUNT10",
-            value: "10%",
-            type: "Percentage",
-            num: 10,
-            start_at: "2021-09-01",
-            end_at: "2021-09-30",
-            status: "Active",
-        },
-    ];
-
     const [discounts, setDiscounts] = useState([]);
 
     const fetchDiscounts = useCallback(async () => {
         try {
             const res = await getDiscounts(userInfo.hotel.id);
             if (res && +res.statusCode === 200) {
-                setDiscounts(res.data);
+                const discounts = res.data.map((discount) => ({
+                    ...discount,
+                    key: discount.id,
+                }));
+
+                setDiscounts(discounts);
             }
         } catch (error) {
             console.error("Error fetching discounts:", error);
@@ -145,6 +137,7 @@ const Discount = () => {
 
     const handleDiscountAdded = () => {
         // Refresh discount list
+        fetchDiscounts();
     };
 
     return (

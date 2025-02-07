@@ -249,6 +249,20 @@ const getDiscounts = async (hotelId) => {
     return await axios.get(`/discounts/all/${hotelId}`);
 };
 
+const createDiscount = async (data) => {
+    const persistedData = {
+        status: data.status?.toLowerCase() || "active",
+        code: data.code || "",
+        type: data.type?.toLowerCase() || "",
+        value: data.value || 0,
+        num: data.num || 1,
+        start_at: data.start_at || formatDate(new Date(), "yyyy-mm-dd"),
+        end_at: data.end_at || formatDate(addDays(new Date(), 30), "yyyy-mm-dd"),
+    };
+
+    return await axios.post("/discounts/create", persistedData);
+};
+
 // Guest
 const updateStatus = async (reservationId, status) => {
     return await axios.patch(
@@ -296,5 +310,6 @@ export {
     getTodayCheckOut,
     updateStatus,
     updateHotelRequestStatus,
+    createDiscount,
     getDiscounts,
 };

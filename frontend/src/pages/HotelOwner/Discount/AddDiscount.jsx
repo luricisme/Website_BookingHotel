@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Modal, Form, Input, InputNumber, DatePicker, Select, Button, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import moment from "moment";
+import { createDiscount } from "../../../services/apiService";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -46,8 +47,8 @@ const AddDiscount = ({ onSuccess }) => {
             delete formData.dateRange;
 
             // Call API to create discount
-            // const response = await createDiscount(formData);
-            console.log("Submit form:", formData);
+            const response = await createDiscount(formData);
+            console.log("Submit form:", response);
 
             message.success("Discount created successfully");
             form.resetFields();

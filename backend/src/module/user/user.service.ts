@@ -178,7 +178,7 @@ export class UserService {
     }
   }
 
-  async registerUser(createAuthDto: CreateAuthDto, role: string) {
+  async registerUser(createAuthDto: CreateAuthDto, role: string, code: string) {
     const { name, dob, cccd, email, password, phone } = createAuthDto;
     const isEmailExist = await this.isEmailExist(email);
     if (isEmailExist) {
@@ -192,12 +192,43 @@ export class UserService {
       email,
       password: hashPassord,
       phone,
-      codeId: uuidv4(),
-      codeExpired: moment().add(30, 'minute'),
+      codeId: code,
+      codeExpired: moment().add(5, 'minute').toDate(),
+      isActive: false,
     };
+    console.log(user);
     const userSaved = await this.usersRepository.save(user);
     await this.setRole(userSaved.id, role);
     return user;
+  }
+
+  async verifyEmail(email: string, code: string) {
+    try {
+      const user = await this.usersRepository.findOne({
+        where: {
+          email,
+        },
+      });
+      if (!user) {
+        throw new BadRequestException('Email has not existed!');
+      }
+
+      if (user.codeId === code) {
+        if (moment().isBefore(user.codeExpired)) {
+          user.isActive = true;
+          await this.updateUser(user);
+        } else {
+          throw new BadRequestException('The activation code has expired!');
+        }
+      } else {
+        throw new BadRequestException('Invalid activation code!');
+      }
+
+      return user;
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Error verifying email');
+    }
   }
 
   async setupResetPassword(email: string) {

@@ -10,6 +10,7 @@ import {
   Request,
   Req,
   Res,
+  Query,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -23,6 +24,7 @@ import { GoogleAuthGuard } from './guard/google-auth.guard';
 import { ResetpassAuthDto } from './dto/resetpassword-auth.dto';
 import { Throttle } from '@nestjs/throttler';
 import { Roles } from '@/helpers/decorator/roles';
+import { ResponseDto } from '@/helpers/utils';
 
 @Controller('auth')
 export class AuthController {
@@ -61,6 +63,13 @@ export class AuthController {
     @Param('role') role: string,
   ) {
     return this.authService.register(createAuthDto, role);
+  }
+
+  @Get('verify-email')
+  @Public()
+  async verifyEmail(@Query('token') token: string) {
+    const user = await this.authService.verifyEmail(token);
+    return new ResponseDto(200, 'Successfully', user);
   }
 
   @Get('forgetPassword/:email')

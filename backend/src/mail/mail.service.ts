@@ -1,19 +1,21 @@
 import { User } from '@/module/user/entities/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
+import { verify } from 'crypto';
 
 @Injectable()
 export class MailService {
     constructor(private mailerService: MailerService) {}
 
-  async sendUserActivation(user: any) {
+  async sendUserActivation(user: any, verifyToken: string) {
     await this.mailerService.sendMail({
       to: user.email,
       // from: '"Support Team" <support@example.com>',
-      subject: 'Successfully Registered',
-      template: './register',
+      subject: 'Activate your account',
+      template: './verifyemail',
       context: {
         name: user.name,
+        verifyUrl: `http://localhost:3001/api/auth/verify-email?token=${verifyToken}`
       },
     });
   }

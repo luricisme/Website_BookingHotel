@@ -44,7 +44,7 @@ const Footer = () => {
                             <Link to="/regulations" className="text-light text-start p-0">Regulations on BookaStay</Link>
                         </li>
                         <li>
-                            <Link to="/complaint-handling-policy" className="text-light text-start p-0">Complaint handling policy</Link>
+                            <Link to="/handle-policy" className="text-light text-start p-0">Complaint handling policy</Link>
                         </li>
                     </ul>
                 </div>

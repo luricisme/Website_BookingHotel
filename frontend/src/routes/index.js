@@ -13,6 +13,8 @@ import History from "../pages/History";
 import Favorite from "../pages/FAV";
 import AccountSetting from "../pages/Account";
 import Review from "~/pages/Review";
+import HandlePolicy from "../pages/HandlePolicy/index.jsx";
+import Regulations from "../pages/Regulations/index.jsx";
 
 // Hotel Owner Pages
 import RegisterHotel from "~/pages/HotelOwner/RegisterHotel/RegisterHotel";
@@ -97,6 +99,16 @@ const publicRoutes = [
         path: "/review",
         component: Review,
         requiredRole: ["user"],
+    },
+    {
+        path: "/handle-policy",
+        component: HandlePolicy,
+        requiredRole: ["user", "guest", "hotelier", "admin"],
+    },
+    {
+        path: "/regulations",
+        component: Regulations,
+        requiredRole: ["user", "guest", "hotelier", "admin"],
     },
     {
         path: "/hotel/:id",

@@ -8,9 +8,13 @@ import {
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import AddDiscount from "./AddDiscount";
+import { useNavigate } from "react-router-dom";
+import EditDiscount from "./EditDiscount";
 
 const Discount = () => {
     const userInfo = useSelector((state) => state.account.userInfo);
+
+    const navigate = useNavigate();
 
     const mockData = [
         {
@@ -75,21 +79,13 @@ const Discount = () => {
             width: 150, // Increased width for better spacing
             render: (text, record) => (
                 <Space size="small">
-                    <Button
-                        type="primary"
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={() => {
-                            console.log("Edit record", record);
+                    <EditDiscount
+                        record={record}
+                        onSuccess={() => {
+                            // Refresh discount list
+                            // fetchDiscounts();
                         }}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            backgroundColor: "#1890ff",
-                        }}
-                    >
-                        Edit
-                    </Button>
+                    />
                     <Popconfirm
                         title="Delete Discount"
                         description="Are you sure you want to delete this discount?"
@@ -98,15 +94,15 @@ const Discount = () => {
                         cancelText="No"
                         onConfirm={async () => {
                             console.log("Delete record", record);
-                            try {
-                                const res = await deleteRoom(record.key);
-                                if (res && +res.status === 200) {
-                                    toast.success("Discount deleted successfully");
-                                    fetchRooms();
-                                }
-                            } catch (error) {
-                                toast.error("Failed to delete discount");
-                            }
+                            // try {
+                            //     const res = await deleteRoom(record.key);
+                            //     if (res && +res.status === 200) {
+                            //         toast.success("Discount deleted successfully");
+                            //         fetchRooms();
+                            //     }
+                            // } catch (error) {
+                            //     toast.error("Failed to delete discount");
+                            // }
                         }}
                     >
                         <Button

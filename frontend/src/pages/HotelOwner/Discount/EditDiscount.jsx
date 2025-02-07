@@ -1,16 +1,29 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, InputNumber, DatePicker, Select, Button, message } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { EditOutlined } from "@ant-design/icons";
 import moment from "moment";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
-const AddDiscount = ({ onSuccess }) => {
+const EditDiscount = ({ record, onSuccess }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [maxValue, setMaxValue] = useState(undefined);
+
+    useEffect(() => {
+        if (isModalOpen && record) {
+            // Set initial form values
+            form.setFieldsValue({
+                code: record.code,
+                type: record.type,
+                value: parseFloat(record.value), // Convert from "10%" to 10
+                num: record.num,
+                dateRange: [moment(record.start_at), moment(record.end_at)],
+            });
+        }
+    }, [isModalOpen, record]);
 
     const showModal = () => {
         setIsModalOpen(true);
@@ -34,28 +47,27 @@ const AddDiscount = ({ onSuccess }) => {
     const onFinish = async (values) => {
         try {
             setLoading(true);
-            // Transform date range to start_at and end_at
             const [startDate, endDate] = values.dateRange;
 
             const formData = {
                 ...values,
+                id: record.key, // Include record ID for update
                 start_at: startDate.format("YYYY-MM-DD"),
                 end_at: endDate.format("YYYY-MM-DD"),
-                status: "Active", // Default status for new discount
+                status: record.status, // Maintain existing status
             };
             delete formData.dateRange;
 
-            // Call API to create discount
-            // const response = await createDiscount(formData);
-            console.log("Submit form:", formData);
+            // Call API to update discount
+            // const response = await updateDiscount(formData);
+            console.log("Update form:", formData);
 
-            message.success("Discount created successfully");
-            form.resetFields();
+            message.success("Discount updated successfully");
             setIsModalOpen(false);
             onSuccess?.(); // Callback to refresh discount list
         } catch (error) {
-            message.error("Failed to create discount");
-            console.error("Error creating discount:", error);
+            message.error("Failed to update discount");
+            console.error("Error updating discount:", error);
         } finally {
             setLoading(false);
         }
@@ -65,33 +77,26 @@ const AddDiscount = ({ onSuccess }) => {
         <>
             <Button
                 type="primary"
-                icon={<PlusOutlined />}
+                icon={<EditOutlined />}
                 onClick={showModal}
-                size="large"
+                size="small"
                 style={{
                     display: "flex",
                     alignItems: "center",
                     gap: "5px",
                 }}
             >
-                Add New Discount
+                Edit
             </Button>
 
             <Modal
-                title="Add New Discount"
+                title="Edit Discount"
                 open={isModalOpen}
                 onCancel={handleCancel}
                 footer={null}
                 width={600}
             >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={onFinish}
-                    initialValues={{
-                        type: "Percentage",
-                    }}
-                >
+                <Form form={form} layout="vertical" onFinish={onFinish}>
                     <Form.Item
                         name="code"
                         label="Discount Code"
@@ -179,7 +184,7 @@ const AddDiscount = ({ onSuccess }) => {
                             Cancel
                         </Button>
                         <Button type="primary" htmlType="submit" loading={loading}>
-                            Create Discount
+                            Update Discount
                         </Button>
                     </div>
                 </Form>
@@ -188,4 +193,4 @@ const AddDiscount = ({ onSuccess }) => {
     );
 };
 
-export default AddDiscount;
+export default EditDiscount;

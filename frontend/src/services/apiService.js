@@ -1,4 +1,5 @@
 import axios from "~/utils/axiosCustomize";
+import { addDays, formatDate } from "../utils/datetime";
 
 // Auth
 const userLogin = async (data) => {
@@ -117,18 +118,6 @@ const getAvatarUrl = async (email) => {
 
 // Booking
 const startBooking = async (data) => {
-    const {
-        hotelId,
-        checkInDate,
-        checkOutDate,
-        roomType2,
-        type2Price,
-        roomType4,
-        type4Price,
-        sumPrice,
-        userId,
-    } = data;
-
     return await axios.post("/booking/start", data);
 };
 
@@ -255,6 +244,11 @@ const getTodayCheckOut = async (hotelId) => {
     return await axios.get(`/booking/total/o/${hotelId}`);
 };
 
+// Discount
+const getDiscounts = async (hotelId) => {
+    return await axios.get(`/discounts/all/${hotelId}`);
+};
+
 // Guest
 const updateStatus = async (reservationId, status) => {
     return await axios.patch(
@@ -302,4 +296,5 @@ export {
     getTodayCheckOut,
     updateStatus,
     updateHotelRequestStatus,
+    getDiscounts,
 };

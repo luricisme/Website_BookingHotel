@@ -17,6 +17,7 @@ const initialState = {
         phone: "",
         avatar: null,
         role: "",
+        hotel: {},
     },
     accessToken: "",
     refreshToken: "",

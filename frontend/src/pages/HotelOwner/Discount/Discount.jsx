@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Modal, Space, Table, Button, Popconfirm } from "antd";
 import { QuestionCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import AddDiscount from "./AddDiscount";
 import { useNavigate } from "react-router-dom";
 import EditDiscount from "./EditDiscount";
+import { getDiscounts } from "../../../services/apiService";
+import { Capitalize } from "../../../utils/stringUtils";
+import { formatDate } from "../../../utils/datetime";
 
 const Discount = () => {
     const userInfo = useSelector((state) => state.account.userInfo);
@@ -24,6 +27,25 @@ const Discount = () => {
         },
     ];
 
+    const [discounts, setDiscounts] = useState([]);
+
+    const fetchDiscounts = useCallback(async () => {
+        try {
+            const res = await getDiscounts(userInfo.hotel.id);
+            if (res && +res.statusCode === 200) {
+                setDiscounts(res.data);
+            }
+        } catch (error) {
+            console.error("Error fetching discounts:", error);
+        }
+    }, [userInfo.hotel]);
+
+    useEffect(() => {
+        if (userInfo.hotel) {
+            fetchDiscounts();
+        }
+    }, [fetchDiscounts, userInfo.hotel]);
+
     const columns = [
         {
             title: "Code",
@@ -42,6 +64,7 @@ const Discount = () => {
             dataIndex: "type",
             key: "type",
             width: 100,
+            render: (text) => Capitalize(text),
         },
         {
             title: "Num",
@@ -54,18 +77,21 @@ const Discount = () => {
             dataIndex: "start_at",
             key: "start_at",
             width: 120,
+            render: (text) => formatDate(new Date(text), "yyyy-mm-dd") || "N/A",
         },
         {
             title: "End Date",
             dataIndex: "end_at",
             key: "end_at",
             width: 120,
+            render: (text) => formatDate(new Date(text), "yyyy-mm-dd") || "N/A",
         },
         {
             title: "Status",
             dataIndex: "status",
             key: "status",
             width: 100,
+            render: (text) => Capitalize(text),
         },
         {
             title: "Action",
@@ -145,7 +171,7 @@ const Discount = () => {
                     <div style={{ minWidth: "800px" }}>
                         <Table
                             columns={columns}
-                            dataSource={mockData}
+                            dataSource={discounts}
                             scroll={{ x: 800 }}
                             tableLayout="fixed"
                             loading={false}

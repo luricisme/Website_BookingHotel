@@ -5,9 +5,10 @@ import { useSelector } from "react-redux";
 import AddDiscount from "./AddDiscount";
 import { useNavigate } from "react-router-dom";
 import EditDiscount from "./EditDiscount";
-import { deleteDiscount, getDiscounts } from "../../../services/apiService";
+import { deleteDiscount, getDiscounts, updateDiscountStatus } from "../../../services/apiService";
 import { Capitalize } from "../../../utils/stringUtils";
 import { formatDate } from "../../../utils/datetime";
+import StyledStatusSelect from "./StyledStatusSelect";
 
 const Discount = () => {
     const userInfo = useSelector((state) => state.account.userInfo);
@@ -37,6 +38,23 @@ const Discount = () => {
             fetchDiscounts();
         }
     }, [fetchDiscounts, userInfo.hotel]);
+
+    const handleStatusChange = async (record, status) => {
+        console.log("Update status", record, status);
+        try {
+            const res = await updateDiscountStatus(record.id || record, {
+                status: Capitalize(status),
+            });
+            if (res && +res.statusCode === 200) {
+                message.success("Discount status updated successfully");
+                fetchDiscounts();
+            } else {
+                message.error("Failed to update discount status");
+            }
+        } catch (error) {
+            message.error("Failed to update discount status");
+        }
+    };
 
     const columns = [
         {
@@ -83,7 +101,15 @@ const Discount = () => {
             dataIndex: "status",
             key: "status",
             width: 100,
-            render: (text) => Capitalize(text),
+            render: (status, record) => (
+                <>
+                    <StyledStatusSelect
+                        status={status}
+                        record={record}
+                        handleStatusChange={handleStatusChange}
+                    />
+                </>
+            ),
         },
         {
             title: "Action",

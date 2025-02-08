@@ -267,6 +267,10 @@ const updateDiscount = async (discountId, updateData) => {
     return await axios.patch(`/discounts/update/${discountId}`, updateData);
 };
 
+const updateDiscountStatus = async (discountId, status) => {
+    return await axios.patch(`/discounts/update/${discountId}`, status);
+};
+
 const deleteDiscount = async (discountId) => {
     return await axios.delete(`/discounts/delete/${discountId}`);
 };
@@ -322,4 +326,5 @@ export {
     getDiscounts,
     updateDiscount,
     deleteDiscount,
+    updateDiscountStatus,
 };

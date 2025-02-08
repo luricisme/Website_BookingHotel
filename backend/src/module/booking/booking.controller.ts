@@ -16,7 +16,8 @@ export class BookingController {
   // BOOKING
   // [GET]: /booking/check-booking --> Kiểm tra booking còn hạn không
   @Get('check-booking')
-  @Roles("user")
+  // @Roles("user")
+  @Public()
   async check(
     @Req() req,
     @Res() res
@@ -37,7 +38,8 @@ export class BookingController {
 
   // [GET]: /booking/information
   @Get('information')
-  @Roles("user")
+  // @Roles("user")
+  @Public()
   async getInformation(
     @Req() req
   ) {
@@ -46,17 +48,31 @@ export class BookingController {
 
   // [POST]: /booking/information
   @Post('information')
-  @Roles("user")
+  // @Roles("user")
+  @Public()
   async addInformation(
     @Res() res,
-    @Body() note: string
+    @Body() note: string,
   ) {
     return await this.bookingService.addNote(res, note);
   }
 
+  // [POST]: /booking/apply-discount
+  @Post('apply-discount')
+  // @Roles("user")
+  @Public()
+  async applyDiscount(
+    @Req() req,
+    @Res() res,
+    @Body() id_discount: string, oldSumPrice: number
+  ) {
+    return await this.bookingService.applyDiscount(req, res, id_discount, oldSumPrice);
+  }
+
   // [POST]: /booking/finish
   @Post('finish')
-  @Roles("user")
+  // @Roles("user")
+  @Public()
   async finishBooking(
     @Body() body: { paymentMethod: string },
     @Req() req,

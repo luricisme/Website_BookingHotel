@@ -17,9 +17,10 @@ import { User } from '../user/entities/user.entity';
 import { Request, Response } from 'express';
 import { BookingDetail } from '../booking_detail/entities/booking_detail.entity';
 import { BookingRoom } from '../booking_room/entities/booking_room.entity';
+import { Payment } from '../payment/entities/payment.entity';
+import { Discount } from '../discount/entities/discount.entity';
 import axios from 'axios';
 import * as crypto from 'crypto';
-import { Payment } from '../payment/entities/payment.entity';
 import { Cron } from '@nestjs/schedule';
 
 @Injectable()
@@ -45,6 +46,9 @@ export class BookingService {
 
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
+
+    @InjectRepository(Discount)
+    private readonly discountRepository: Repository<Discount>,
 
     @InjectRepository(RoomType)
     private readonly roomTypeRepository: Repository<RoomType>,
@@ -195,14 +199,6 @@ export class BookingService {
       // Kiểm tra cookie bookingData
       if (!bookingData) {
         const oldStateCookie = req.cookies['oldState'];
-
-        if (!oldStateCookie) {
-          return res.status(HttpStatus.BAD_REQUEST).json({
-            status_code: HttpStatus.BAD_REQUEST,
-            message: 'No old state found',
-          });
-        }
-
         const oldState = JSON.parse(oldStateCookie);
         const { hotelId, availableRoom, canBooking } = oldState;
 
@@ -314,6 +310,13 @@ export class BookingService {
       const user = await userQuery.getRawOne();
       // console.log('USER: ', user);
 
+      // Lấy ra các discount của khách sạn đó
+      const discountQuery = await this.discountRepository
+        .createQueryBuilder('discount')
+        .where('discount.hotelId = :hotelId', { hotelId });
+      const discount = await discountQuery.getRawMany();
+      console.log('DISCOUNT: ', discount);
+
       const data = {
         hotel: hotel,
         checkInDate: bookingData.checkInDate,
@@ -323,6 +326,7 @@ export class BookingService {
         roomType4: bookingData.roomType4,
         type4Price: bookingData.type4Price,
         sumPrice: bookingData.sumPrice,
+        discount: discount,
         user: user,
       };
 
@@ -367,6 +371,40 @@ export class BookingService {
     }
   }
 
+  async applyDiscount(req: Request, res: Response, id_discount: string, oldSumPrice: number) {
+    try {
+      const discountQuery = await this.discountRepository
+        .createQueryBuilder('discount')
+        .where('discount.id = :id_discount', { id_discount });
+      const discount = await discountQuery.getRawOne();
+      console.log('APPLIED DISCOUNT: ', discount);
+
+      const value = discount.value;
+      let newSumPrice = oldSumPrice;
+      let discountAmount = 0;
+      if(discount.type === 'percentage'){
+        discountAmount = value * oldSumPrice / 100;
+      } else if(discount.type === 'fix amount'){
+        discountAmount = value;
+      }
+      newSumPrice = oldSumPrice - discountAmount;
+
+      return res.status(HttpStatus.OK).json({
+        message: 'New sum price added successfully to booking data',
+      });
+    } catch (error) {
+      console.error('Error booking hotels:', error);
+
+      throw new HttpException(
+        {
+          status_code: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: 'Internal server error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async processPayment(req: Request, res: Response, paymentMethod) {
     try {
       // console.log('PAYMENTMETHOD: ', paymentMethod);
@@ -375,7 +413,7 @@ export class BookingService {
       const noteDT = req.cookies['note'];
       if (!bookingDT || !noteDT) {
         throw new HttpException(
-          'Booking data not found in cookies',
+          'Booking data or note not found in cookies',
           HttpStatus.NOT_FOUND,
         );
       }

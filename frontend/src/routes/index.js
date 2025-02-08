@@ -13,6 +13,8 @@ import History from "../pages/History";
 import Favorite from "../pages/FAV";
 import AccountSetting from "../pages/Account";
 import Review from "~/pages/Review";
+import HandlePolicy from "../pages/HandlePolicy/index.jsx";
+import Regulations from "../pages/Regulations/index.jsx";
 
 // Hotel Owner Pages
 import RegisterHotel from "~/pages/HotelOwner/RegisterHotel/RegisterHotel";
@@ -25,6 +27,7 @@ import {
     OrderDetail,
     Login as HotelOwnerLogin,
     Register as HotelOwnerRegister,
+    Report,
     Discount,
 } from "~/pages/HotelOwner";
 import Unauthorized from "~/pages/Unauthorized/Unauthorized";
@@ -98,6 +101,16 @@ const publicRoutes = [
         requiredRole: ["user"],
     },
     {
+        path: "/handle-policy",
+        component: HandlePolicy,
+        requiredRole: ["user", "guest", "hotelier", "admin"],
+    },
+    {
+        path: "/regulations",
+        component: Regulations,
+        requiredRole: ["user", "guest", "hotelier", "admin"],
+    },
+    {
         path: "/hotel/:id",
         component: HotelDetails,
         requiredRole: ["user", "guest"],
@@ -157,6 +170,12 @@ const publicRoutes = [
     {
         path: "/hotel-owner/room-type",
         component: RoomType,
+        layout: HotelOwnerLayout,
+        requiredRole: ["hotelier"],
+    },
+    {
+        path: "/hotel-owner/report",
+        component: Report,
         layout: HotelOwnerLayout,
         requiredRole: ["hotelier"],
     },

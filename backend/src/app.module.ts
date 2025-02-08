@@ -34,6 +34,7 @@ import { DiscountModule } from './module/discount/discount.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ 
       isGlobal: true,
       envFilePath: ['.env.development']

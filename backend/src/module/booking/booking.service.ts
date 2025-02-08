@@ -20,6 +20,7 @@ import { BookingRoom } from '../booking_room/entities/booking_room.entity';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import { Payment } from '../payment/entities/payment.entity';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class BookingService {
@@ -195,6 +196,13 @@ export class BookingService {
       if (!bookingData) {
         const oldStateCookie = req.cookies['oldState'];
 
+        if (!oldStateCookie) {
+          return res.status(HttpStatus.BAD_REQUEST).json({
+            status_code: HttpStatus.BAD_REQUEST,
+            message: 'No old state found',
+          });
+        }
+
         const oldState = JSON.parse(oldStateCookie);
         const { hotelId, availableRoom, canBooking } = oldState;
 
@@ -245,6 +253,26 @@ export class BookingService {
       console.error('Error checking booking:', error);
     }
   }
+
+  // Gọi tự động checkBooking ở server
+  // @Cron('*/30 * * * * *') 
+  // async handleCron() {
+  //   console.log('Run cron');
+    
+  //   const mockReq = {
+  //     cookies: {},
+  //   } as Request;
+
+  //   const mockRes = {
+  //     status: (statusCode: number) => ({
+  //       json: (body: any) => {
+  //         console.log(`🚀 Cron job response: ${statusCode} -`, body);
+  //       },
+  //     }),
+  //   } as Response;
+
+  //   await this.checkBooking(mockReq, mockRes);
+  // }
 
   async getInformation(req: Request) {
     try {

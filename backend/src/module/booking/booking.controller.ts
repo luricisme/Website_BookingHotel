@@ -66,7 +66,6 @@ export class BookingController {
     return await this.bookingService.processPayment(req, res, paymentMethod);
   }
 
-
   // HOTEL - CONTROL 
   // [GET]: /booking/guest?userId=...&page=...&per_page=...
   @Get('guest')
@@ -102,26 +101,6 @@ export class BookingController {
     @Req() req,
   ){
     return await this.bookingService.getAllHistoryBooking(req, getHistoryBookingDto);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bookingService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBookingDto: UpdateBookingDto) {
-    return this.bookingService.update(+id, updateBookingDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bookingService.remove(+id);
-  }
-
-  @Get('reservation')
-  async bookRoom(createBookingDto: CreateBookingDto) {
-
   }
 
   // Room (Reservation)

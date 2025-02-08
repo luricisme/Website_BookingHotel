@@ -196,10 +196,25 @@ export class UserService {
       codeExpired: moment().add(5, 'minute').toDate(),
       isActive: false,
     };
-    console.log(user);
     const userSaved = await this.usersRepository.save(user);
     await this.setRole(userSaved.id, role);
     return user;
+  }
+
+  async setVerifyCode(email: string) {
+    try {
+      const user = await this.findByEmail(email);
+      if (!user) {
+        throw new BadRequestException('Email has not existed!');
+      }
+      user.codeId = uuidv4();
+      user.codeExpired = moment().add(5, 'minute').toDate();
+      await this.updateUser(user);
+      return user;
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Error setting verify code for user: ' + email);
+    }
   }
 
   async verifyEmail(email: string, code: string) {

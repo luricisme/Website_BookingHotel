@@ -49,35 +49,49 @@
         display: inline-block;
         margin: 0 auto;
       }
-      .msg.d-none {
-        display: none;
-      }
     </style>
     <body>
       <div class="card">
       <div style="border-radius:200px; height:200px; width:200px; background: #F8FAF5; margin:0 auto;">
+        {{#if error}}
             <i class="error">✗</i>
+        {{else}}
+            <i class="checkmark">✓</i>
+        {{/if}}
       </div>
+        {{#if error}}
             <h1 class="error">Error</h1> 
+        {{else}}
+            <h1>Success</h1> 
+        {{/if}}
         <p>{{message}}</p>
-            <div class="resendBtn" style="text-align: center; margin-top: 20px;">
-                <a href="{{verifyUrl}}" style="display: inline-block; background-color: #0070f3; color: white; padding: 12px 20px; font-size: 16px; text-decoration: none; border-radius: 5px;">
-                    Resend activation email
-                </a>
+        {{#if error}}
+          <div class="resendBtn" style="text-align: center; margin-top: 20px;">
+              <a href="{{verifyUrl}}" style="display: inline-block; background-color: #0070f3; color: white; padding: 12px 20px; font-size: 16px; text-decoration: none; border-radius: 5px;">
+                  Resend activation email
+              </a>
 
-                <p class="msg d-none" style="margin-top: 20px;"></p>
-            </div>
+              <p class="msg d-none" style="margin-top: 20px;"></p>
+          </div>
+        {{else}}
+          <div class="resendBtn" style="text-align: center; margin-top: 20px;">
+              <a href="{{verifyUrl}}" style="display: inline-block; background-color: #0070f3; color: white; padding: 12px 20px; font-size: 16px; text-decoration: none; border-radius: 5px;">
+                  Click here to login your account
+              </a>
+          </div>
+        {{/if}}
       </div>
 
       <script>
         $(document).ready(function() {
             $('.resendBtn a').on('click', function(e) {
                 e.preventDefault();
+                $.get($(this).attr('href'));
                 $('.resendBtn a').hide();
                 $('.resendBtn .msg').removeClass('d-none');
                 $('.resendBtn .msg').text('Resending email...');
                 setTimeout(function() {
-                    $('.resendBtn .msg').text('Activation email has been resend to your email.<br/> Please check again!');
+                    $('.resendBtn .msg').html('Activation email has been resend to your email.<br/> Please check again!');
                 }, 2000);
             })
         })

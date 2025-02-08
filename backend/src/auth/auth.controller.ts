@@ -11,6 +11,7 @@ import {
   Req,
   Res,
   Query,
+  Render,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -25,6 +26,7 @@ import { ResetpassAuthDto } from './dto/resetpassword-auth.dto';
 import { Throttle } from '@nestjs/throttler';
 import { Roles } from '@/helpers/decorator/roles';
 import { ResponseDto } from '@/helpers/utils';
+import { error } from 'console';
 
 @Controller('auth')
 export class AuthController {
@@ -67,9 +69,28 @@ export class AuthController {
 
   @Get('verify-email')
   @Public()
+  @Render('activation-email')
   async verifyEmail(@Query('token') token: string) {
-    const user = await this.authService.verifyEmail(token);
-    return new ResponseDto(200, 'Successfully', user);
+    const {error, email} = await this.authService.verifyEmail(token);
+    if (!error) {
+      return {
+        error: false,
+        message: 'Your account has been activated',
+        verifyUrl: 'http://localhost:3000/login'
+      }
+    } else {
+      return {
+        error: true,
+        message: 'Activation link is invalid or expired, please try again',
+        verifyUrl: 'http://localhost:3001/api/auth/verify-email/resend?email=' + email
+      }
+    }
+  }
+
+  @Get('verify-email/resend')
+  @Public()
+  async resendVerifyEmail(@Query('email') email: string) {
+    return await this.authService.resendActivationEmail(email);
   }
 
   @Get('forgetPassword/:email')

@@ -83,16 +83,26 @@ export class AuthService {
       const user = await this.usersService.verifyEmail(decoded.email, decoded.code);
 
       if (!user) {
-        throw new BadRequestException('Invalid token');
+        throw new BadRequestException('User not found');
       }
-      return user;
+      return {error: false, email: user.email};
     } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        throw new BadRequestException('Token expired');
-      } else {
-        throw new InternalServerErrorException('Invalid token')
+      let email = null;
+  
+      const decoded = this.jwtService.decode(token) as { email?: string };
+    
+      if (decoded?.email) {
+        email = decoded.email;
       }
+      return {error: true, email};
     }
+  }
+
+  async resendActivationEmail(email: string) {
+    const user = await this.usersService.setVerifyCode(email);
+    const payload = {email, code: user.codeId};
+    const verifyToken = this.jwtService.sign(payload, {expiresIn: '5m'});
+    this.mailService.sendUserActivation(user, verifyToken);
   }
 
   async forgetPassword(email: string) {

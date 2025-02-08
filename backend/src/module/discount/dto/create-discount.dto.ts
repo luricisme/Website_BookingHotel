@@ -18,6 +18,7 @@ export class CreateDiscountDto extends OmitType(PartialType(Discount), ['id', 'h
         required: false,
     })
     @IsOptional()
+    @Transform(({value} : {value: string}) => value ? value.toLowerCase() : value)
     status: string;
 
     @ApiProperty({

@@ -1,6 +1,7 @@
 import React from "react";
 import "./Footer.scss"; // Import your styles here
 import icons from "~/assets/icon";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
     return (
@@ -18,13 +19,13 @@ const Footer = () => {
                             />
                             Hotline: 1900 686868</li>
                         <li>
-                            Hỗ trợ khách hàng:{" "}
+                            Customer Service:{" "}
                             <a href="mailto:help@bookastay.vn" className="text-decoration-none text-info">
                                 help@bookastay.vn
                             </a>
                         </li>
                         <li>
-                            Liên hệ hợp tác:{" "}
+                            Contract with us:{" "}
                             <a href="mailto:support@bookastay.vn" className="text-decoration-none text-info">
                                 support@bookastay.vn
                             </a>
@@ -34,26 +35,23 @@ const Footer = () => {
 
                 {/* Về chúng tôi */}
                 <div className="col-md-4 my-2 p-5">
-                    <h2 className="fw-bold">Giới thiệu</h2>
+                    <h2 className="fw-bold">Introduction</h2>
                     <ul className="list-unstyled mt-4">
                         <li>
-                            <button className="text-light text-start p-0">About Us</button>
+                            <Link to="/about" className="text-light text-start p-0">About Us</Link>
                         </li>
                         <li>
-                            <button className="text-light text-start p-0">Regulations on BookaStay</button>
+                            <Link to="/regulations" className="text-light text-start p-0">Regulations on BookaStay</Link>
                         </li>
                         <li>
-                            <button className="text-light text-start p-0">Connect with us</button>
-                        </li>
-                        <li>
-                            <button className="text-light text-start p-0">Complaint handling policy</button>
+                            <Link to="/handle-policy" className="text-light text-start p-0">Complaint handling policy</Link>
                         </li>
                     </ul>
                 </div>
 
                 {/* Đối tác thanh toán */}
                 <div className="col-md-3 my-2 p-5">
-                    <h2 className="fw-bold">Đối tác thanh toán</h2>
+                    <h2 className="fw-bold">Payment Partner</h2>
                     <div className="d-flex flex-wrap gap-2 mt-4">
                         <img src="https://play-lh.googleusercontent.com/uCtnppeJ9ENYdJaSL5av-ZL1ZM1f3b35u9k8EOEjK3ZdyG509_2osbXGH5qzXVmoFv0" alt="MoMo" className="img-fluid rounded" style={{ width: "50px" }} />
                     </div>

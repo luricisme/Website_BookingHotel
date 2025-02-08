@@ -14,31 +14,8 @@ function Login() {
 
     const dispatch = useDispatch();
 
-    const isValidEmail = (email) => {
-        // Regex kiểm tra email hợp lệ
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    };
-
-    const isValidPassword = (password) => {
-        // Mật khẩu ít nhất 8 ký tự, có ít nhất 1 chữ hoa, 1 chữ thường và 1 số
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-        return passwordRegex.test(password);
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setErrorMessage(""); // Reset lỗi
-
-        if (!isValidEmail(email)) {
-            setErrorMessage("Email không hợp lệ. Vui lòng nhập email hợp lệ.");
-            return;
-        }
-
-        if (!isValidPassword(password)) {
-            setErrorMessage("Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.");
-            return;
-        }
 
         const data = {
             email,
@@ -68,11 +45,6 @@ function Login() {
             >
                 <h1 className="text-center login-title mb-3">LOGIN</h1>
                 <form onSubmit={handleSubmit} className="d-flex flex-column py-3">
-                    {errorMessage && (
-                        <div className="alert alert-danger" role="alert">
-                            {errorMessage}
-                        </div>
-                    )}
                     <div className="mb-3">
                         <label htmlFor="email" className="form-label">
                             Email address
@@ -101,20 +73,6 @@ function Login() {
                             required
                         />
                     </div>
-                    {/* <div className="d-flex justify-content-between align-items-center mb-3">
-                        <div className="d-flex align-items-center">
-                            <input
-                                type="checkbox"
-                                id="rememberMe"
-                                name="rememberMe"
-                                className="me-2 mt-1"
-                            />
-                            <label htmlFor="rememberMe">Save password</label>
-                        </div>
-                        <a id="forgetPassword" href="/change-password">
-                            Forget password?
-                        </a>
-                    </div> */}
                     <input type="submit" className="login mb-0 py-2 mt-3" value="OK" />
                 </form>
                 <p className="text-center mt-5 mb-0">

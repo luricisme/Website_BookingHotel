@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from '@/module/user/user.service';
@@ -24,6 +25,9 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('User does not exist');
+    }
+    if (!user.isActive) {
+      throw new BadRequestException('User is not activated');
     }
     let isValidPassword = await comparePassword(pass, user.password);
     if (!isValidPassword) {
@@ -65,9 +69,40 @@ export class AuthService {
   }
 
   async register(createAuthDto: CreateAuthDto, role: string) {
-    const user = await this.usersService.registerUser(createAuthDto, role);
-    this.mailService.sendUserActivation(user);
+    const payload = { email: createAuthDto.email, code: uuidv4() };
+    const verifyToken = this.jwtService.sign(payload, {expiresIn: '5m'});
+
+    const user = await this.usersService.registerUser(createAuthDto, role, payload.code);
+    this.mailService.sendUserActivation(user, verifyToken);
     return user;
+  }
+
+  async verifyEmail(token: string) {
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.usersService.verifyEmail(decoded.email, decoded.code);
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+      return {error: false, email: user.email};
+    } catch (error) {
+      let email = null;
+  
+      const decoded = this.jwtService.decode(token) as { email?: string };
+    
+      if (decoded?.email) {
+        email = decoded.email;
+      }
+      return {error: true, email};
+    }
+  }
+
+  async resendActivationEmail(email: string) {
+    const user = await this.usersService.setVerifyCode(email);
+    const payload = {email, code: user.codeId};
+    const verifyToken = this.jwtService.sign(payload, {expiresIn: '5m'});
+    this.mailService.sendUserActivation(user, verifyToken);
   }
 
   async forgetPassword(email: string) {

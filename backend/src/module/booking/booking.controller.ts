@@ -64,8 +64,10 @@ export class BookingController {
   async applyDiscount(
     @Req() req,
     @Res() res,
-    @Body() id_discount: string, oldSumPrice: number
+    @Body() body
   ) {
+    const id_discount = Number(body.id_discount); 
+    const oldSumPrice = parseFloat(body.oldSumPrice);
     return await this.bookingService.applyDiscount(req, res, id_discount, oldSumPrice);
   }
 

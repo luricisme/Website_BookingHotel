@@ -313,7 +313,8 @@ export class BookingService {
       // Lấy ra các discount của khách sạn đó
       const discountQuery = await this.discountRepository
         .createQueryBuilder('discount')
-        .where('discount.hotelId = :hotelId', { hotelId });
+        .where('discount.hotelId = :hotelId', { hotelId })
+        .andWhere('discount.status = :status', { status: 'active' });
       const discount = await discountQuery.getRawMany();
       console.log('DISCOUNT: ', discount);
 
@@ -371,7 +372,7 @@ export class BookingService {
     }
   }
 
-  async applyDiscount(req: Request, res: Response, id_discount: string, oldSumPrice: number) {
+  async applyDiscount(req: Request, res: Response, id_discount: number, oldSumPrice: number) {
     try {
       const discountQuery = await this.discountRepository
         .createQueryBuilder('discount')
@@ -379,18 +380,27 @@ export class BookingService {
       const discount = await discountQuery.getRawOne();
       console.log('APPLIED DISCOUNT: ', discount);
 
-      const value = discount.value;
+      const value = discount.discount_value;
+      const type = discount.discount_type;
+      console.log('DISCOUNT VALUE: ', value);
       let newSumPrice = oldSumPrice;
       let discountAmount = 0;
-      if(discount.type === 'percentage'){
+      if(type === 'percentage'){
         discountAmount = value * oldSumPrice / 100;
-      } else if(discount.type === 'fix amount'){
+      } else if(type === 'fix amount'){
         discountAmount = value;
       }
+      console.log('DISCOUNT AMOUNT: ', discountAmount);
       newSumPrice = oldSumPrice - discountAmount;
 
+      res.cookie('discount', JSON.stringify(newSumPrice), {
+        maxAge: 5 * 60 * 1000,
+        httpOnly: true,
+      });
       return res.status(HttpStatus.OK).json({
-        message: 'New sum price added successfully to booking data',
+        message: 'New sum price added successfully to discount cookie',
+        discountAmount,
+        newSumPrice
       });
     } catch (error) {
       console.error('Error booking hotels:', error);
@@ -411,14 +421,16 @@ export class BookingService {
       // Kiểm tra xem có thông tin booking trong cookie không
       const bookingDT = req.cookies['bookingData'];
       const noteDT = req.cookies['note'];
-      if (!bookingDT || !noteDT) {
+      const discountDT = req.cookies['discount'];
+      if (!bookingDT || !noteDT || !discountDT) {
         throw new HttpException(
-          'Booking data or note not found in cookies',
+          'Booking data or note or discount not found in cookies',
           HttpStatus.NOT_FOUND,
         );
       }
       const bookingData = JSON.parse(bookingDT);
       const note = JSON.parse(noteDT);
+      const discount = JSON.parse(discountDT);
       // console.log('NOTE: ', note);
 
       if (paymentMethod === 'cash') {
@@ -446,6 +458,7 @@ export class BookingService {
           orderInfo,
           bookingData,
           note,
+          discount
         );
         console.log('Payment URL:', paymentUrl);
         return res.status(HttpStatus.OK).json({
@@ -474,6 +487,7 @@ export class BookingService {
     orderInfo: string,
     bookingData,
     note,
+    discount
   ) {
     const accessKey = process.env.MOMO_ACCESS_KEY;
     const secretKey = process.env.MOMO_SECRET_KEY;
@@ -483,7 +497,7 @@ export class BookingService {
     var ipnUrl =
       'https://6bfc-113-185-82-137.ngrok-free.app/callback';
     var requestType = 'payWithMethod';
-    var amount = bookingData.sumPrice;
+    var amount = discount.newSumPrice;
     var orderId = partnerCode + new Date().getTime();
     var requestId = orderId;
     var orderGroupId = '';

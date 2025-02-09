@@ -33,14 +33,25 @@ const StyledStatusSelect = ({ status = "", record, handleStatusChange }) => {
     const currentStatus = String(status || "").toUpperCase();
     const statusStyle = getStatusColor(currentStatus);
 
+    const [loading, setLoading] = React.useState(false);
+
     return (
         <Select
+            loading={loading}
             style={{
-                width: 100,
+                width: 108,
                 background: statusStyle.background,
             }}
             value={currentStatus || undefined}
-            onChange={(newValue) => handleStatusChange(record.key, newValue)}
+            onChange={async (newValue) => {
+                try {
+                    setLoading(true);
+                    await handleStatusChange(record, newValue);
+                    setLoading(false);
+                } catch (error) {
+                    setLoading(false);
+                }
+            }}
             popupMatchSelectWidth={false}
             className={`status-select-${currentStatus.toLowerCase()}`}
         >

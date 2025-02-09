@@ -20,6 +20,14 @@ const getRefreshToken = async () => {
     return await axios.get(`/auth/renew_token/${localStorage.getItem("refresh_token")}`);
 };
 
+const sendResetCode = async (email) => {
+    return await axios.get(`/auth/forgetPassword/${email}`);
+};
+
+const resetPassword = async (data) => {
+    return await axios.post("/auth/resetPassword", data);
+};
+
 // Search
 const getHotels = async (
     query = {
@@ -327,4 +335,6 @@ export {
     updateDiscount,
     deleteDiscount,
     updateDiscountStatus,
+    sendResetCode,
+    resetPassword,
 };

@@ -99,7 +99,7 @@ const EditDiscount = ({ record, onSuccess }) => {
                 width={600}
             >
                 <Form form={form} layout="vertical" onFinish={onFinish}>
-                    <Form.Item
+                    {/* <Form.Item
                         name="code"
                         label="Discount Code"
                         rules={[
@@ -108,7 +108,7 @@ const EditDiscount = ({ record, onSuccess }) => {
                         ]}
                     >
                         <Input placeholder="Enter discount code (e.g., SUMMER2024)" />
-                    </Form.Item>
+                    </Form.Item> */}
 
                     <Form.Item
                         name="type"

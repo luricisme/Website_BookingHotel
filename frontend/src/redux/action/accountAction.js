@@ -1,4 +1,4 @@
-import axios from "~/utils/axiosCustomize";
+// import axios from "~/utils/axiosCustomize";
 import { userLogin, getProfile, getAvatarUrl } from "~/services/apiService";
 
 export const USER_LOGIN_REQUEST = "USER_LOGIN_REQUEST";
@@ -46,13 +46,13 @@ export const doLogin = (email, password) => {
             } else {
                 dispatch({
                     type: USER_LOGIN_FAIL,
-                    error: response?.error?.message || "Login failed",
+                    error: response?.message || "Login failed",
                     isDoLogin: true,
                 });
 
                 return {
                     EC: -1,
-                    EM: response?.error?.message || "Login failed",
+                    EM: response?.message || "Login failed",
                     DT: {
                         user,
                         accessToken: "",

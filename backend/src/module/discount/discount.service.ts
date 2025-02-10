@@ -19,7 +19,7 @@ export class DiscountService {
 
     async createDiscount(req: any, createDiscountDto: CreateDiscountDto) {
         let code = createDiscountDto.code;
-        if (!code) {
+        if (code.length < 1) {
             code = generatingRandomCode(10);
         }
         const discount = {code, ...createDiscountDto, hotel: req.user.hotel};

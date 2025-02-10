@@ -30,6 +30,7 @@ export class CreateBookingDto {
     @Min(0)
     type4Price: number;
 
+    // Hiện tại cái này vẫn gửi lên để đỡ phải sửa
     @IsNumber()
     @Min(0)
     sumPrice: number;

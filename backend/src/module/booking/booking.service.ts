@@ -54,7 +54,7 @@ export class BookingService {
     private readonly roomTypeRepository: Repository<RoomType>,
 
     private readonly minioService: MinioService,
-  ) {}
+  ) { }
 
   async create(
     createBookingDto: CreateBookingDto,
@@ -62,19 +62,17 @@ export class BookingService {
     res: Response,
   ) {
     try {
+      // Ở đây lấy ra các trường này thôi xong rồi lấy giá tiền theo database để tính tổng tiền
       const {
         hotelId,
         checkInDate,
         checkOutDate,
-        roomType2,
-        roomType4,
-        type2Price,
-        type4Price,
-        sumPrice,
+        roomType2, // Số lượng phòng 2
+        roomType4, // Số lượng phòng 4
         userId,
       } = createBookingDto;
-      // Tạm thời xử lý với phòng có trường là available trước
-      // Lấy ra danh sách phòng của khách sạn
+
+      // Lấy ra danh sách phòng đang trống của khách sạn
       const availableRoomQuery = await this.roomRepository
         .createQueryBuilder('room')
         .leftJoin('room.hotel', 'hotel')
@@ -90,6 +88,7 @@ export class BookingService {
       const availableRoom = await availableRoomQuery.getRawMany();
       console.log('AVAILABLE ROOMS: ', availableRoom);
 
+      // Lấy ra danh sách phòng đang được đặt nhưng có ngày không trùng với lại ngày đặt của người khác
       const canBookingQuery = await this.bookingRepository
         .createQueryBuilder('booking')
         .leftJoin('booking.bookingRooms', 'bookingRoom')
@@ -141,22 +140,45 @@ export class BookingService {
         .where('id IN (:...roomIds)', { roomIds })
         .execute();
 
+      // Query roomType để lấy ra giá tiền và tính toán giá tiền 
+      const roomTypeQuery = await this.roomTypeRepository
+        .createQueryBuilder('roomType')
+        .select(['roomType.type AS type',
+          'roomType.price AS price',
+          'roomType.weekend_price AS weekend_price'])
+        .where('roomType.hotelId = :hotelId', { hotelId })
+      const roomType = await roomTypeQuery.getRawMany();
+      // console.log('ROOMTYPE: ', roomType);
+
+      const room4 = roomType.filter(room => room.type === 4)[0] || null;
+      // console.log('ROOM4: ', room4);
+      const room2 = roomType.filter(room => room.type === 2)[0] || null;
+      // console.log('ROOM2: ', room2);
+
+      const totalRoom2 = await this.calculateTotalPrice(room2, roomType2, checkInDate, checkOutDate);
+      console.log('TOTAL ROOM 2: ', totalRoom2);
+      const totalRoom4 = await this.calculateTotalPrice(room4, roomType4, checkInDate, checkOutDate);
+      console.log('TOTAL ROOM 4: ', totalRoom4);
+
+      const sumPrice = totalRoom2 + totalRoom4;
+
       const bookingData = {
         hotelId,
         userId,
         checkInDate,
         checkOutDate,
         roomType2,
-        type2Price,
+        type2Price: room2.price,
+        type2WeekendPrice: room2.weekend_price,
         roomType4,
-        type4Price,
+        type4Price: room4.price,
+        tye4WeekendPrice: room4.weekend_price,
         sumPrice,
         rooms: selectedRooms,
         createdAt: Date.now(),
       };
 
       // console.log('BOOKING DATA: ', bookingData);
-
       // Lưu vào cookie với thời gian hết hạn là 5 phút
       res.cookie('bookingData', JSON.stringify(bookingData), {
         maxAge: 5 * 60 * 1000,
@@ -168,7 +190,7 @@ export class BookingService {
         availableRoom,
         canBooking,
       };
-      console.log('OLD STATE: ', oldState);
+      // console.log('OLD STATE: ', oldState);
       res.cookie('oldState', JSON.stringify(oldState), {
         maxAge: 6 * 60 * 1000,
         httpOnly: true,
@@ -189,6 +211,24 @@ export class BookingService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  private async calculateTotalPrice(room, numRooms, checkInDate, checkOutDate) {
+    const startDate = new Date(checkInDate);
+    const endDate = new Date(checkOutDate);
+    let totalPrice = 0;
+
+    for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay(); // 0: Chủ Nhật, 6: Thứ Bảy
+
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        totalPrice += room.weekend_price * numRooms; // Giá cuối tuần * số lượng phòng
+      } else {
+        totalPrice += room.price * numRooms; // Giá ngày thường * số lượng phòng
+      }
+    }
+
+    return totalPrice;
   }
 
   // Kiểm tra xem booking còn hạn không
@@ -254,7 +294,7 @@ export class BookingService {
   // @Cron('*/30 * * * * *') 
   // async handleCron() {
   //   console.log('Run cron');
-    
+
   //   const mockReq = {
   //     cookies: {},
   //   } as Request;
@@ -348,6 +388,7 @@ export class BookingService {
     }
   }
 
+  // Thêm note
   async addNote(res: Response, note: string) {
     try {
       res.cookie('note', JSON.stringify(note), {
@@ -372,6 +413,7 @@ export class BookingService {
     }
   }
 
+  // Áp dụng discount
   async applyDiscount(req: Request, res: Response, id_discount: number, oldSumPrice: number) {
     try {
       const discountQuery = await this.discountRepository
@@ -385,15 +427,20 @@ export class BookingService {
       console.log('DISCOUNT VALUE: ', value);
       let newSumPrice = oldSumPrice;
       let discountAmount = 0;
-      if(type === 'percentage'){
+      if (type === 'percentage') {
         discountAmount = value * oldSumPrice / 100;
-      } else if(type === 'fix amount'){
+      } else if (type === 'fix amount') {
         discountAmount = value;
       }
       console.log('DISCOUNT AMOUNT: ', discountAmount);
       newSumPrice = oldSumPrice - discountAmount;
 
-      res.cookie('discount', JSON.stringify(newSumPrice), {
+      const discountData = {
+        id_discount,
+        newSumPrice
+      }
+
+      res.cookie('discount', JSON.stringify(discountData), {
         maxAge: 5 * 60 * 1000,
         httpOnly: true,
       });
@@ -440,6 +487,7 @@ export class BookingService {
         // console.log('BOOKING DATA TRUOC KHI VAO: ', bookingData);
         await this.saveDataIntoDatabase(
           bookingData,
+          discount,
           paymentStatus,
           bookingStatus,
           note,
@@ -505,7 +553,7 @@ export class BookingService {
     var lang = 'vi';
 
     const extraData = Buffer.from(
-      JSON.stringify({ bookingData, note }),
+      JSON.stringify({ bookingData, note, discount }),
     ).toString('base64');
 
     //before sign HMAC SHA256 with format
@@ -598,7 +646,7 @@ export class BookingService {
   async updatePaymentStatus(req: Request, res: Response, body) {
     // console.log('BODY: ', body);
     const extraData = Buffer.from(body.extraData, 'base64').toString('utf-8');
-    const { bookingData, note } = JSON.parse(extraData);
+    const { bookingData, note, discount } = JSON.parse(extraData);
     // console.log('NOTE: ', note);
     const resultCode = body.resultCode;
     if (resultCode === 0) {
@@ -606,6 +654,7 @@ export class BookingService {
       const bookingStatus = 'confirmed';
       this.saveDataIntoDatabase(
         bookingData,
+        discount,
         paymentStatus,
         bookingStatus,
         note,
@@ -703,6 +752,7 @@ export class BookingService {
   private async createPayment(
     bookingId: number,
     bookingData: any,
+    discount: any,
     paymentMethod: string,
     status: string,
   ) {
@@ -715,7 +765,7 @@ export class BookingService {
           method: paymentMethod,
           status: status,
           booking: { id: bookingId },
-          totalCost: bookingData.sumPrice,
+          totalCost: discount.newSumPrice,
         })
         .execute();
     } catch (error) {
@@ -747,8 +797,28 @@ export class BookingService {
     }
   }
 
+  private async updateDiscount(discount: any) {
+    try {
+      const id_discount = discount.id_discount;
+
+      // Cập nhật số lượng `num` giảm đi 1
+      await this.discountRepository
+        .createQueryBuilder()
+        .update('discounts')
+        .set({ num: () => 'num - 1' }) // Giảm num đi 1
+        .where('id = :id_discount', { id_discount })
+        .execute();
+
+      console.log(`Discount ID ${id_discount} updated successfully.`);
+    } catch (error) {
+      console.error('Error updating discount:', error);
+      throw error;
+    }
+  }
+
   private async saveDataIntoDatabase(
     bookingData: any,
+    discount: any,
     paymentStatus: string,
     bookingStatus: string,
     note: string,
@@ -767,9 +837,11 @@ export class BookingService {
       await this.createPayment(
         bookingId,
         bookingData,
+        discount,
         paymentMethod,
         paymentStatus,
       );
+      await this.updateDiscount(discount);
     } catch (error) {
       console.error('Error saving data into database:', error);
       throw new HttpException(
@@ -1050,18 +1122,6 @@ export class BookingService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} booking`;
-  }
-
-  update(id: number, updateBookingDto: UpdateBookingDto) {
-    return `This action updates a #${id} booking`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} booking`;
   }
 
   async totalReservation(id: number) {

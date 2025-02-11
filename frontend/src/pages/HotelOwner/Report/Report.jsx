@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { Modal, Form, Input, InputNumber, DatePicker, Select, Button, message } from "antd";
+
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -13,6 +13,7 @@ import {
     PointElement,
     LineElement,
 } from "chart.js";
+import {DateRangePicker} from "rsuite";
 
 ChartJS.register(
     CategoryScale,
@@ -24,6 +25,8 @@ ChartJS.register(
     Tooltip,
     Legend
 );
+
+const { RangePicker } = DatePicker;
 
 // Sample Monthly Data
 const sampleDataMonthly = [
@@ -96,18 +99,12 @@ const Report = () => {
             {/* Date Pickers for Weekly Mode */}
             {viewType === "weekly" && (
                 <div className="mb-4 flex gap-4 col-5 ms-5">
-                    <DatePicker
-                        selected={startDate}
-                        onChange={(date) => setStartDate(date)}
-                        className="p-2 border rounded mx-3"
-                        placeholderText="Start Date"
-                    />
-                    <DatePicker
-                        selected={endDate}
-                        onChange={(date) => setEndDate(date)}
-                        className="p-2 border rounded"
-                        placeholderText="End Date"
-                    />
+                    <RangePicker style={{ width: "100%" }} onChange={(dates) => {
+                        setStartDate(dates[0]);
+                        setEndDate(dates[1]);
+                    }}>
+
+                    </RangePicker>
                 </div>
             )}
 

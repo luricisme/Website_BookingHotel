@@ -1,8 +1,8 @@
 import { useDispatch, useSelector } from "react-redux";
-import { Descriptions, Modal } from "antd";
+import { Descriptions, Modal, Button } from "antd";
 import "./Dashboard.scss";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     getAvailableRoom,
     getOccupiedRoom,
@@ -11,6 +11,7 @@ import {
     getTotalReservation,
 } from "~/services/apiService";
 import { doGetAccount } from "~/redux/action/accountAction";
+import UpdateInfo from "./UpdateInfo";
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -73,8 +74,10 @@ const Dashboard = () => {
                 </Modal>
             ) : null}
             <div className="dashboard">
-                <h1>Dashboard</h1>
-
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h1 className="mb-0">Dashboard</h1>
+                    <UpdateInfo />
+                </div>
                 <div className="d-flex my-3 bg-white p-3">
                     <Descriptions title="Hotel Information" column={2}>
                         <Descriptions.Item span={2} label="Hotel Id">

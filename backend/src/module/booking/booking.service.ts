@@ -15,7 +15,7 @@ import { Room } from '../room/entities/room.entity';
 import { RoomType } from '../room_type/entites/room_type.entity';
 import { MinioService } from '@/minio/minio.service';
 import { User } from '../user/entities/user.entity';
-import { Request, Response } from 'express';
+import { query, Request, Response } from 'express';
 import { BookingDetail } from '../booking_detail/entities/booking_detail.entity';
 import { BookingRoom } from '../booking_room/entities/booking_room.entity';
 import { Payment } from '../payment/entities/payment.entity';
@@ -25,6 +25,8 @@ import * as crypto from 'crypto';
 import { RedisService } from '../../redis/redis.service';
 import { Cron } from '@nestjs/schedule';
 import { AddInformationDto } from './dto/add-information.dto';
+
+import { DataSource, QueryRunner } from 'typeorm';
 
 @Injectable()
 export class BookingService {
@@ -59,6 +61,8 @@ export class BookingService {
     private readonly minioService: MinioService,
 
     private readonly redisService: RedisService,
+
+    private readonly dataSource: DataSource
   ) { }
 
   // Bắt đầu quá trình booking
@@ -755,13 +759,13 @@ export class BookingService {
     }
   }
 
-  private async saveBooking(bookingData: any, status: string, note: string) {
+  private async saveBooking(bookingData: any, status: string, note: string, queryRunner) {
     try {
       const userId = bookingData.userId;
       const hotelId = bookingData.hotelId;
       const checkInDate = bookingData.checkInDate;
       const checkOutDate = bookingData.checkOutDate;
-      const bookingQuery = await this.bookingRepository
+      const bookingQuery = await queryRunner.manager
         .createQueryBuilder()
         .insert()
         .into('booking')
@@ -783,11 +787,11 @@ export class BookingService {
     }
   }
 
-  private async saveBookingDetail(bookingId: number, bookingData: any) {
+  private async saveBookingDetail(bookingId: number, bookingData: any, queryRunner) {
     try {
       // console.log('BOOKING ID BEFORE QUERY: ', bookingId);
       // console.log('BOOKING DATA: ', bookingData);
-      const bookingDetailQuery = await this.bookingDetailRepository
+      await queryRunner.manager
         .createQueryBuilder()
         .insert()
         .into(BookingDetail)
@@ -812,9 +816,9 @@ export class BookingService {
     }
   }
 
-  private async saveBookingRoom(bookingId: number, bookingData: any) {
+  private async saveBookingRoom(bookingId: number, bookingData: any, queryRunner) {
     try {
-      const bookingRoomQuery = await this.bookingRoomRepository
+      await queryRunner.manager
         .createQueryBuilder()
         .insert()
         .into(BookingRoom)
@@ -833,15 +837,39 @@ export class BookingService {
     }
   }
 
+  private async setStatusRoom(bookingData: any, queryRunner) {
+    try {
+      const hotelId = bookingData.hotelId;
+      const rooms = bookingData.rooms;
+      const roomIds = rooms.map((room) => room.id);
+      if (roomIds.length > 0) {
+        // Cập nhật trạng thái "booked" cho các phòng đã được đặt thành công
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update()
+          .set({ status: 'booked' })
+          .where('hotelId = :hotelId AND id IN (:...ids)', {
+            hotelId,
+            ids: roomIds,
+          })
+          .execute();
+      }
+    } catch (error) {
+      console.error('Error saving payment:', error);
+      throw error;
+    }
+  }
+
   private async createPayment(
     bookingId: number,
     bookingData: any,
     discount: any,
     paymentMethod: string,
     status: string,
+    queryRunner
   ) {
     try {
-      const paymentQuery = await this.paymentRepository
+      await queryRunner.manager
         .createQueryBuilder()
         .insert()
         .into(Payment)
@@ -858,35 +886,12 @@ export class BookingService {
     }
   }
 
-  private async setStatusRoom(bookingData: any) {
-    try {
-      const hotelId = bookingData.hotelId;
-      const rooms = bookingData.rooms;
-      const roomIds = rooms.map((room) => room.id);
-      if (roomIds.length > 0) {
-        // Cập nhật trạng thái "booked" cho các phòng đã được đặt thành công
-        await this.roomRepository
-          .createQueryBuilder()
-          .update()
-          .set({ status: 'booked' })
-          .where('hotelId = :hotelId AND id IN (:...ids)', {
-            hotelId,
-            ids: roomIds,
-          })
-          .execute();
-      }
-    } catch (error) {
-      console.error('Error saving payment:', error);
-      throw error;
-    }
-  }
-
-  private async updateDiscount(discount: any) {
+  private async updateDiscount(discount: any, queryRunner) {
     try {
       const id_discount = discount.id_discount;
 
       if (id_discount) {
-        await this.discountRepository
+        await queryRunner.manager
           .createQueryBuilder()
           .update('discounts')
           .set({ num: () => 'num - 1' }) // Giảm num đi 1
@@ -909,25 +914,35 @@ export class BookingService {
     note: string,
     paymentMethod: string,
   ) {
+    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction(); // Bắt đầu transaction
     try {
       const bookingId = await this.saveBooking(
         bookingData,
         bookingStatus,
         note,
+        queryRunner
       );
       // console.log('BOOKING ID: ', bookingId);
-      await this.saveBookingDetail(bookingId, bookingData);
-      await this.saveBookingRoom(bookingId, bookingData);
-      await this.setStatusRoom(bookingData);
+      await this.saveBookingDetail(bookingId, bookingData, queryRunner);
+      await this.saveBookingRoom(bookingId, bookingData, queryRunner);
+      await this.setStatusRoom(bookingData, queryRunner);
       await this.createPayment(
         bookingId,
         bookingData,
         discount,
         paymentMethod,
         paymentStatus,
+        queryRunner
       );
-      await this.updateDiscount(discount);
+      await this.updateDiscount(discount, queryRunner);
+
+      // Commit nếu không có lỗi
+      await queryRunner.commitTransaction();
     } catch (error) {
+      // Rollback nếu có lỗi
+      await queryRunner.rollbackTransaction();
       console.error('Error saving data into database:', error);
       throw new HttpException(
         {
@@ -936,6 +951,9 @@ export class BookingService {
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    } finally {
+      // Giải phóng tài nguyên
+      await queryRunner.release(); 
     }
   }
 

@@ -7,6 +7,7 @@ import { ViewDetailBookingDto } from './dto/view-detail-booking.dto';
 import { ChangeStatusBookingDto } from './dto/change-status-booking.dto';
 import { Public } from '@/helpers/decorator/public';
 import { GetHistoryBookingDto } from './dto/get-history-booking.dto';
+import { AddInformationDto } from './dto/add-information.dto';
 import { Roles } from '@/helpers/decorator/roles';
 
 @Controller('booking')
@@ -14,32 +15,28 @@ export class BookingController {
   constructor(private readonly bookingService: BookingService) { }
 
   // BOOKING
-  // [GET]: /booking/check-booking --> Kiểm tra booking còn hạn không
-  @Get('check-booking')
-  // @Roles("user")
-  @Public()
-  async check(
-    @Req() req,
-    @Res() res
-  ) {
-    return await this.bookingService.checkBooking(req, res);
-  }
-
   // [POST]: /booking/start
   @Post('start')
-  @Public()
+  @Roles("user")
   async startBooking(
     @Body() createBookingDto: CreateBookingDto,
-    @Req() req,
-    @Res() res
   ) {
-    return await this.bookingService.create(createBookingDto, req, res);
+    return await this.bookingService.create(createBookingDto);
+  }
+
+  // [GET]: /booking/check-booking --> Kiểm tra booking còn hạn không
+  // Đối với người đã đăng nhập thì có thể trở lại
+  @Get('check-booking')
+  @Roles("user")
+  async check(
+    @Req() req
+  ) {
+    return await this.bookingService.checkBooking(req);
   }
 
   // [GET]: /booking/information
   @Get('information')
-  // @Roles("user")
-  @Public()
+  @Roles("user")
   async getInformation(
     @Req() req
   ) {
@@ -48,33 +45,29 @@ export class BookingController {
 
   // [POST]: /booking/information
   @Post('information')
-  // @Roles("user")
-  @Public()
+  @Roles("user")
   async addInformation(
-    @Res() res,
-    @Body() note: string,
+    @Req() req,
+    @Body() addInformationDto: AddInformationDto
   ) {
-    return await this.bookingService.addNote(res, note);
+    return await this.bookingService.addInformation(req, addInformationDto);
   }
 
   // [POST]: /booking/apply-discount
   @Post('apply-discount')
-  // @Roles("user")
-  @Public()
+  @Roles("user")
   async applyDiscount(
     @Req() req,
-    @Res() res,
     @Body() body
   ) {
-    const id_discount = Number(body.id_discount); 
+    const id_discount = Number(body.id_discount);
     const oldSumPrice = parseFloat(body.oldSumPrice);
-    return await this.bookingService.applyDiscount(req, res, id_discount, oldSumPrice);
+    return await this.bookingService.applyDiscount(req, id_discount, oldSumPrice);
   }
 
   // [POST]: /booking/finish
   @Post('finish')
   // @Roles("user")
-  @Public()
   async finishBooking(
     @Body() body: { paymentMethod: string },
     @Req() req,
@@ -90,7 +83,7 @@ export class BookingController {
   @Roles("hotelier")
   async getAllBooking(
     @Query() getBookingDto: GetBookingDto
-  ){
+  ) {
     return this.bookingService.findAll(getBookingDto);
   }
 
@@ -99,7 +92,7 @@ export class BookingController {
   @Roles("hotelier", "user")
   async getDetailBooking(
     @Query() viewDetailBookingDto: ViewDetailBookingDto
-  ){
+  ) {
     return this.bookingService.getDetail(viewDetailBookingDto);
   }
 
@@ -107,7 +100,7 @@ export class BookingController {
   @Patch('guest/update-status')
   @Roles("hotelier", "user")
   async updateStatus(@Query() changeStatusBookingDto: ChangeStatusBookingDto
-  ){
+  ) {
     return await this.bookingService.updateStatusBooking(changeStatusBookingDto);
   }
 
@@ -117,7 +110,7 @@ export class BookingController {
   async getAllHistory(
     @Query() getHistoryBookingDto: GetHistoryBookingDto,
     @Req() req,
-  ){
+  ) {
     return await this.bookingService.getAllHistoryBooking(req, getHistoryBookingDto);
   }
 

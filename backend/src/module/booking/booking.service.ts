@@ -1163,12 +1163,13 @@ export class BookingService {
       ]);
       const totalPages = Math.ceil(totalBookings / per_page);
 
-      // Kiểm tra cookie 'bookingData'
-      const bookingDT = req.cookies['bookingData'];
+      const redisKey = `bookingData:${userId}`;
+      // console.log('🔍 Checking Redis Key:', redisKey);
+      const bookingData = await this.redisService.get(redisKey);
+      // console.log('📌 Redis GET Result:', bookingData);
       let tempBooking = null;
 
-      if (bookingDT) {
-        const bookingData = JSON.parse(bookingDT);
+      if (bookingData) {
 
         const hotelId = bookingData.hotelId;
         const hotelQuery = await this.hotelRepository

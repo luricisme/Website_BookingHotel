@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
 } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -21,6 +22,7 @@ import { Payment } from '../payment/entities/payment.entity';
 import { Discount } from '../discount/entities/discount.entity';
 import axios from 'axios';
 import * as crypto from 'crypto';
+import { RedisService } from '../../redis/redis.service';
 import { Cron } from '@nestjs/schedule';
 
 @Injectable()
@@ -62,7 +64,6 @@ export class BookingService {
     res: Response,
   ) {
     try {
-      // Ở đây lấy ra các trường này thôi xong rồi lấy giá tiền theo database để tính tổng tiền
       const {
         hotelId,
         checkInDate,
@@ -111,7 +112,6 @@ export class BookingService {
 
       const canBooking = await canBookingQuery.getRawMany();
       // console.log('CAN BOOKING: ', canBooking);
-
       const rooms = [...availableRoom, ...canBooking];
       // console.log('ALL AVAILABLE ROOMS: ', rooms);
       // Lấy ra phòng loại 2 và 4
@@ -122,7 +122,6 @@ export class BookingService {
         const shuffled = roomsList.sort(() => 0.5 - Math.random());
         return shuffled.slice(0, count);
       };
-
       // Lấy random ra số lượng phòng cho khách hàng
       const randomRoomsType2 = getRandomRooms(roomsType2, roomType2);
       const randomRoomsType4 = getRandomRooms(roomsType4, roomType4);
@@ -156,10 +155,9 @@ export class BookingService {
       // console.log('ROOM2: ', room2);
 
       const totalRoom2 = await this.calculateTotalPrice(room2, roomType2, checkInDate, checkOutDate);
-      console.log('TOTAL ROOM 2: ', totalRoom2);
+      // console.log('TOTAL ROOM 2: ', totalRoom2);
       const totalRoom4 = await this.calculateTotalPrice(room4, roomType4, checkInDate, checkOutDate);
-      console.log('TOTAL ROOM 4: ', totalRoom4);
-
+      // console.log('TOTAL ROOM 4: ', totalRoom4);
       const sumPrice = totalRoom2 + totalRoom4;
 
       const bookingData = {

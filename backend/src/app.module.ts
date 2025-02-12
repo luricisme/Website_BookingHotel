@@ -31,11 +31,12 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { DailyCheckService } from './helpers/DailyCheckService';
 import { RolesGuard } from './auth/guard/role.guard';
 import { DiscountModule } from './module/discount/discount.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    ConfigModule.forRoot({ 
+    ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.development']
     }),
@@ -54,14 +55,14 @@ import { DiscountModule } from './module/discount/discount.module';
         extra: {
           max: 10,
           min: 0,
-          idleTimeoutMillis: 10000, 
+          idleTimeoutMillis: 10000,
         },
       }),
       inject: [ConfigService],
     }),
     MailerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService : ConfigService) => ({
+      useFactory: async (configService: ConfigService) => ({
         transport: {
           host: configService.get<string>('MAILDEV_HOST'),
           port: configService.get<number>('MAILDEV_PORT'),
@@ -76,7 +77,7 @@ import { DiscountModule } from './module/discount/discount.module';
           from: '"No Reply"',
         },
         template: {
-          dir: join(__dirname, '..','mail/templates'),
+          dir: join(__dirname, '..', 'mail/templates'),
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,
@@ -103,7 +104,8 @@ import { DiscountModule } from './module/discount/discount.module';
     BookingDetailModule,
     BookingRoomModule,
     DiscountModule,
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
+    RedisModule
   ],
   controllers: [AppController],
   providers: [
@@ -121,8 +123,8 @@ import { DiscountModule } from './module/discount/discount.module';
   ],
 })
 export class AppModule implements NestModule {
-  constructor(private dataSource : DataSource) {
-    
+  constructor(private dataSource: DataSource) {
+
   }
 
   configure(consumer: MiddlewareConsumer) {

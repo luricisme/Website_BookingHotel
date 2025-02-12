@@ -316,6 +316,66 @@ export class BookingService {
     }
   }
 
+  @Cron('*/1 * * * *') // Chạy mỗi 1 phút
+  async autoResetRoomStatus() {
+    console.log('🔄 Running cron job to reset room status...');
+
+    try {
+      const keys = await this.redisService.keys('oldState:*'); // Lấy tất cả key oldState:userId
+      for (const key of keys) {
+        const userId = key.split(':')[1]; // Lấy userId từ key Redis
+
+        // Kiểm tra xem bookingData có còn tồn tại không
+        const bookingData = await this.redisService.get(`bookingData:${userId}`);
+        if (bookingData) {
+          console.log(`⏳ Booking still active for user ${userId}, skipping reset.`);
+          continue; // Nếu bookingData vẫn còn, bỏ qua user này
+        }
+
+        // Nếu bookingData không còn => Lấy oldState để reset trạng thái phòng
+        const oldState = await this.redisService.get(key);
+        if (!oldState) continue;
+
+        const { hotelId, availableRoom, canBooking } = oldState;
+
+        const availableRoomIds = availableRoom.map((room) => room.id);
+        const canBookingIds = canBooking.map((room) => room.id);
+
+        // Cập nhật trạng thái "booked" cho canBooking
+        if (canBookingIds.length > 0) {
+          await this.roomRepository
+            .createQueryBuilder()
+            .update()
+            .set({ status: 'booked' })
+            .where('hotelId = :hotelId AND id IN (:...ids)', {
+              hotelId,
+              ids: canBookingIds,
+            })
+            .execute();
+        }
+
+        // Cập nhật trạng thái "available" cho availableRoom
+        if (availableRoomIds.length > 0) {
+          await this.roomRepository
+            .createQueryBuilder()
+            .update()
+            .set({ status: 'available' })
+            .where('hotelId = :hotelId AND id IN (:...ids)', {
+              hotelId,
+              ids: availableRoomIds,
+            })
+            .execute();
+        }
+
+        // Xóa key Redis sau khi cập nhật xong
+        await this.redisService.del(key);
+        console.log(`✅ Reset status for user ${userId}`);
+      }
+    } catch (error) {
+      console.error('❌ Error in autoResetRoomStatus cron job:', error);
+    }
+  }
+
   // Lấy ra thông tin để hiển thị
   async getInformation(req: Request) {
     try {
@@ -438,7 +498,7 @@ export class BookingService {
     try {
       const userLogin = req.user as any;
       const userId = userLogin.id;
-      
+
       const discountQuery = await this.discountRepository
         .createQueryBuilder('discount')
         .where('discount.id = :id_discount', { id_discount });
@@ -825,15 +885,15 @@ export class BookingService {
     try {
       const id_discount = discount.id_discount;
 
-      if(id_discount){
+      if (id_discount) {
         await this.discountRepository
-        .createQueryBuilder()
-        .update('discounts')
-        .set({ num: () => 'num - 1' }) // Giảm num đi 1
-        .where('id = :id_discount', { id_discount })
-        .execute();
+          .createQueryBuilder()
+          .update('discounts')
+          .set({ num: () => 'num - 1' }) // Giảm num đi 1
+          .where('id = :id_discount', { id_discount })
+          .execute();
 
-      console.log(`Discount ID ${id_discount} updated successfully.`);
+        console.log(`Discount ID ${id_discount} updated successfully.`);
       }
     } catch (error) {
       console.error('Error updating discount:', error);

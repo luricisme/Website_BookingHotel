@@ -193,7 +193,7 @@ export class BookingService {
         createdAt: Date.now(),
       };
       await this.redisService.set(`bookingData:${userId}`, bookingData, 300);
-      
+
       const oldState = {
         hotelId,
         availableRoom,
@@ -218,6 +218,7 @@ export class BookingService {
     }
   }
 
+  // Tính toán tổng giá tiền 
   private async calculateTotalPrice(room, numRooms, checkInDate, checkOutDate) {
     const startDate = new Date(checkInDate);
     const endDate = new Date(checkOutDate);

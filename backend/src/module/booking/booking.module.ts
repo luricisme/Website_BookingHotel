@@ -13,9 +13,12 @@ import { BookingRoom } from '../booking_room/entities/booking_room.entity';
 import { Payment } from '../payment/entities/payment.entity';
 import { Discount } from '../discount/entities/discount.entity';
 import { RedisModule } from '@/redis/redis.module';
+import { MailModule } from '@/mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Booking, Hotel, RoomType, Room, User, BookingDetail, BookingRoom, Payment, Discount]), RedisModule],
+  imports: [TypeOrmModule.forFeature([Booking, Hotel, RoomType, Room, User, BookingDetail, BookingRoom, Payment, Discount]), 
+  RedisModule,
+  MailModule],
   controllers: [BookingController],
   providers: [BookingService, MinioService],
   exports: [BookingService]

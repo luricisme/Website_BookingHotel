@@ -25,8 +25,9 @@ import * as crypto from 'crypto';
 import { RedisService } from '../../redis/redis.service';
 import { Cron } from '@nestjs/schedule';
 import { AddInformationDto } from './dto/add-information.dto';
-
 import { DataSource, QueryRunner } from 'typeorm';
+import { MailService } from '@/mail/mail.service';
+
 
 @Injectable()
 export class BookingService {
@@ -62,7 +63,9 @@ export class BookingService {
 
     private readonly redisService: RedisService,
 
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+
+    private mailService: MailService,
   ) { }
 
   // Bắt đầu quá trình booking
@@ -79,6 +82,14 @@ export class BookingService {
         userId,
       } = createBookingDto;
 
+      const hotelQuery = await this.hotelRepository
+        .createQueryBuilder('hotel')
+        .select([
+          'hotel.name AS name'
+        ])
+        .where('hotel.id = :hotelId', { hotelId })
+      const hotel = await hotelQuery.getRawOne();
+      const hotelName = hotel.name;
       // Lấy ra danh sách phòng đang trống của khách sạn
       const availableRoomQuery = await this.roomRepository
         .createQueryBuilder('room')
@@ -168,6 +179,7 @@ export class BookingService {
 
       const bookingData = {
         hotelId,
+        hotelName,
         userId,
         checkInDate,
         checkOutDate,
@@ -242,7 +254,7 @@ export class BookingService {
       const user = req.user as any;
       // console.log('USER: ', user);
       const userId = user.id;
-      // console.log('USER ID: ', userId);
+      console.log('USER ID: ', userId);
       if (!userId) {
         throw new HttpException(
           {
@@ -253,12 +265,13 @@ export class BookingService {
         );
       }
       const redisKey = `bookingData:${userId}`;
-      // console.log('🔍 Checking Redis Key:', redisKey);
+      console.log('🔍 Checking Redis Key:', redisKey);
       const bookingData = await this.redisService.get(redisKey);
-      // console.log('📌 Redis GET Result:', bookingData);
+      console.log('📌 Redis GET bookingData Result:', bookingData);
       // Kiểm tra xem redis bookingData còn hạn không
       if (!bookingData) {
         const oldState = await this.redisService.get(`oldState:${userId}`);
+        // console.log('OLD STATE: ', oldState);
         if (!oldState) {
           throw new HttpException(
             {
@@ -553,6 +566,9 @@ export class BookingService {
       const userId = userLogin.id;
       console.log('USER ID: ', userId);
 
+      // Lấy ra email của userId đó 
+      const email = userLogin.email;
+
       const bookingData = await this.redisService.get(`bookingData:${userId}`);
       console.log('BOOKING DATA: ', bookingData);
       const note = await this.redisService.get(`notes:${userId}`);
@@ -579,7 +595,9 @@ export class BookingService {
           note,
           paymentMethod,
         );
+        await this.mailService.sendInvoice(email, bookingData, note, discount, paymentMethod);
         await this.redisService.del(`bookingData:${userId}`);
+        await this.redisService.del(`oldState:${userId}`);
         await this.redisService.del(`notes:${userId}`);
         await this.redisService.del(`discounts:${userId}`);
         return res.status(HttpStatus.OK).json({
@@ -633,7 +651,7 @@ export class BookingService {
     var ipnUrl =
       'https://6bfc-113-185-82-137.ngrok-free.app/callback';
     var requestType = 'payWithMethod';
-    var amount = discount.newSumPrice;
+    var amount = discount.totalPrice;
     var orderId = partnerCode + new Date().getTime();
     var requestId = orderId;
     var orderGroupId = '';
@@ -846,7 +864,7 @@ export class BookingService {
         // Cập nhật trạng thái "booked" cho các phòng đã được đặt thành công
         await queryRunner.manager
           .createQueryBuilder()
-          .update()
+          .update('room')
           .set({ status: 'booked' })
           .where('hotelId = :hotelId AND id IN (:...ids)', {
             hotelId,

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .container { padding: 20px; border: 1px solid #ddd; }
+    .header { font-size: 18px; font-weight: bold; color: #333; }
+    .details { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p class="header">Thank you for booking with BookAstay!</p>
+    <p>Hello {{email}},</p>
+    <p>Your booking has been confirmed.</p>
+
+    <div class="details">
+      <p><strong>Booking Details:</strong></p>
+      <p><strong>Hotel:</strong> {{bookingData.hotelName}}</p>
+      <p><strong>Check-in Date:</strong> {{bookingData.checkInDate}}</p>
+      <p><strong>Check-out Date:</strong> {{bookingData.checkOutDate}}</p>
+      {{!-- <p><strong>Total Price:</strong> {{discount.totalPrice}} VND</p> --}}
+      {{!-- <p><strong>Discount:</strong> {{discount.amount}} VND</p> --}}
+      <p><strong>Note:</strong> {{note}}</p>
+      <p><strong>Payment Method:</strong> {{paymentMethod}}</p>
+    </div>
+
+    <p>We wish you a wonderful stay!</p>
+    <p>Best regards,</p>
+    <p>The BookAstay Team</p>
+  </div>
+</body>
+</html>

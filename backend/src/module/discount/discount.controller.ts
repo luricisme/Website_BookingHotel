@@ -6,6 +6,7 @@ import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { Roles } from '@/helpers/decorator/roles';
 import { Public } from '@/helpers/decorator/public';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { Request } from 'express';
 
 @Controller('discounts')
 export class DiscountController {
@@ -26,9 +27,9 @@ export class DiscountController {
         status: 500,
         description: 'Internal server error.',
     })
-    async getAllDiscount(@Param('hotelId') hotelId: string) {
+    async getAllDiscount(@Param('hotelId') hotelId: string, @Req() req: Request) {
         try {
-            const discounts = await this.discountService.getAll(+hotelId);
+            const discounts = await this.discountService.getAll(+hotelId, req);
             return new ResponseDto(200, "Successfully", discounts);
         } catch (error) {
             return new ResponseDto(500, error.message, null);

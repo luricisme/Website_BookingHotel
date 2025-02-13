@@ -9,6 +9,7 @@ import { Public } from '@/helpers/decorator/public';
 import { GetHistoryBookingDto } from './dto/get-history-booking.dto';
 import { AddInformationDto } from './dto/add-information.dto';
 import { Roles } from '@/helpers/decorator/roles';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBadRequestResponse, ApiInternalServerErrorResponse } from '@nestjs/swagger';
 
 @Controller('booking')
 export class BookingController {
@@ -18,6 +19,15 @@ export class BookingController {
   // [POST]: /booking/start
   @Post('start')
   @Roles("user")
+  @ApiOperation({ summary: 'Start a new hotel booking' })
+  @ApiBody({
+    description: 'Booking details',
+    required: true,
+    type: CreateBookingDto,
+  })
+  @ApiResponse({ status: 200, description: 'Booking data and old state saved to Redis' })
+  @ApiBadRequestResponse({ description: 'Invalid booking request' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error' })
   async startBooking(
     @Body() createBookingDto: CreateBookingDto,
   ) {
@@ -67,14 +77,13 @@ export class BookingController {
 
   // [POST]: /booking/finish
   @Post('finish')
-  // @Roles("user")
+  @Roles("user")
   async finishBooking(
     @Body() body: { paymentMethod: string },
     @Req() req,
-    @Res() res,
   ) {
     const paymentMethod = body.paymentMethod;
-    return await this.bookingService.processPayment(req, res, paymentMethod);
+    return await this.bookingService.processPayment(req, paymentMethod);
   }
 
   // HOTEL - CONTROL 

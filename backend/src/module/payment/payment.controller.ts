@@ -4,6 +4,7 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Public } from '@/helpers/decorator/public';
 import { BookingService } from '../booking/booking.service';
+import { Roles } from '@/helpers/decorator/roles';
 
 @Controller('callback')
 export class PaymentController {
@@ -13,22 +14,14 @@ export class PaymentController {
   ) {}
 
   // [POST]: Momo tự động 
-  @Post()
-  @Public()
+  @Post() 
+  @Roles('user')
   async handlePaymentCallback(
     @Body() body: any,
     @Req() req,
     @Res() res,
   ) {
     return await this.bookingService.updatePaymentStatus(req, res, body);
-  }
-
-  @Get('/delete-cookie')
-  @Public()
-  async deleteCookie(
-    @Res() res
-  ){
-    return await this.paymentService.deleteCookie(res);
   }
 
   @Post()

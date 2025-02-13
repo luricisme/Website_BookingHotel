@@ -28,7 +28,6 @@ import { AddInformationDto } from './dto/add-information.dto';
 import { DataSource, QueryRunner } from 'typeorm';
 import { MailService } from '@/mail/mail.service';
 
-
 @Injectable()
 export class BookingService {
   constructor(
@@ -188,29 +187,18 @@ export class BookingService {
         type2WeekendPrice: room2.weekend_price,
         roomType4,
         type4Price: room4.price,
-        tye4WeekendPrice: room4.weekend_price,
+        type4WeekendPrice: room4.weekend_price,
         sumPrice,
         rooms: selectedRooms,
         createdAt: Date.now(),
       };
-      // console.log('BOOKING DATA: ', bookingData);
-      // res.cookie('bookingData', JSON.stringify(bookingData), {
-      //   maxAge: 5 * 60 * 1000,
-      //   httpOnly: true,
-      // });
-
       await this.redisService.set(`bookingData:${userId}`, bookingData, 300);
-
+      
       const oldState = {
         hotelId,
         availableRoom,
         canBooking,
       };
-      // console.log('OLD STATE: ', oldState);
-      // res.cookie('oldState', JSON.stringify(oldState), {
-      //   maxAge: 6 * 60 * 1000,
-      //   httpOnly: true,
-      // });
       await this.redisService.set(`oldState:${userId}`, oldState, 360);
 
       return {
@@ -487,7 +475,9 @@ export class BookingService {
 
       await this.redisService.set(`notes:${userId}`, note, 300);
 
+      const id_discount = 0; // Ở đẩy để là 0 có nghĩa là không có áp dụng discount ngay đây
       const discountData = {
+        id_discount,
         totalPrice
       }
 
@@ -560,11 +550,11 @@ export class BookingService {
   }
 
   // Kết thúc quá trình booking
-  async processPayment(req: Request, res: Response, paymentMethod) {
+  async processPayment(req: Request, paymentMethod) {
     try {
       const userLogin = req.user as any;
       const userId = userLogin.id;
-      console.log('USER ID: ', userId);
+      // console.log('USER ID: ', userId);
 
       // Lấy ra email của userId đó 
       const email = userLogin.email;
@@ -600,26 +590,25 @@ export class BookingService {
         await this.redisService.del(`oldState:${userId}`);
         await this.redisService.del(`notes:${userId}`);
         await this.redisService.del(`discounts:${userId}`);
-        return res.status(HttpStatus.OK).json({
+        return {
           status_code: HttpStatus.OK,
           message: 'Cash successful, information saved to database.',
-        });
+        };
       } else if (paymentMethod === 'momo') {
         const orderInfo = `Thanh toán đặt phòng khách sạn thông qua trang web đặt phòng BookAstay`;
 
         const paymentUrl = await this.createMomoPayment(
-          res,
           orderInfo,
           bookingData,
           note,
           discount
         );
         console.log('Payment URL:', paymentUrl);
-        return res.status(HttpStatus.OK).json({
+        return {
           status_code: HttpStatus.OK,
           message: 'Redirect to MoMo for payment.',
           paymentUrl,
-        });
+        };
       }
 
       // Trả về lỗi nếu phương thức thanh toán không hợp lệ
@@ -637,7 +626,6 @@ export class BookingService {
   }
 
   private async createMomoPayment(
-    res: Response,
     orderInfo: string,
     bookingData,
     note,
@@ -750,22 +738,31 @@ export class BookingService {
   }
 
   async updatePaymentStatus(req: Request, res: Response, body) {
-    // console.log('BODY: ', body);
+    const userLogin = req.user as any;
+    const userId = userLogin.id;
+    const email = userLogin.email;
+
     const extraData = Buffer.from(body.extraData, 'base64').toString('utf-8');
     const { bookingData, note, discount } = JSON.parse(extraData);
-    // console.log('NOTE: ', note);
     const resultCode = body.resultCode;
+
     if (resultCode === 0) {
       const paymentStatus = 'paid';
       const bookingStatus = 'confirmed';
+      const paymentMethod = 'momo';
       this.saveDataIntoDatabase(
         bookingData,
         discount,
         paymentStatus,
         bookingStatus,
         note,
-        'momo',
+        paymentMethod,
       );
+      await this.mailService.sendInvoice(email, bookingData, note, discount, paymentMethod);
+      await this.redisService.del(`bookingData:${userId}`);
+      await this.redisService.del(`oldState:${userId}`);
+      await this.redisService.del(`notes:${userId}`);
+      await this.redisService.del(`discounts:${userId}`);
       return res.status(HttpStatus.OK).json({
         message: 'Payment success, save data into database',
         data: { paymentStatus, bookingData },
@@ -954,8 +951,11 @@ export class BookingService {
         paymentStatus,
         queryRunner
       );
-      await this.updateDiscount(discount, queryRunner);
-
+      // Nếu có áp dụng discount thì mới cập nhật
+      const id_discount = discount.id_discount;
+      if (!id_discount) {
+        await this.updateDiscount(discount, queryRunner);
+      }
       // Commit nếu không có lỗi
       await queryRunner.commitTransaction();
     } catch (error) {
@@ -971,7 +971,7 @@ export class BookingService {
       );
     } finally {
       // Giải phóng tài nguyên
-      await queryRunner.release(); 
+      await queryRunner.release();
     }
   }
 

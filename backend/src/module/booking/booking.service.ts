@@ -2,11 +2,12 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
 } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
-import { Repository } from 'typeorm';
+import { ChildEntity, Repository } from 'typeorm';
 import { Booking } from './entities/booking.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Hotel } from '../hotel/entities/hotel.entity';
@@ -14,12 +15,18 @@ import { Room } from '../room/entities/room.entity';
 import { RoomType } from '../room_type/entites/room_type.entity';
 import { MinioService } from '@/minio/minio.service';
 import { User } from '../user/entities/user.entity';
-import { Request, Response } from 'express';
+import { query, Request, Response } from 'express';
 import { BookingDetail } from '../booking_detail/entities/booking_detail.entity';
 import { BookingRoom } from '../booking_room/entities/booking_room.entity';
+import { Payment } from '../payment/entities/payment.entity';
+import { Discount } from '../discount/entities/discount.entity';
 import axios from 'axios';
 import * as crypto from 'crypto';
-import { Payment } from '../payment/entities/payment.entity';
+import { RedisService } from '../../redis/redis.service';
+import { Cron } from '@nestjs/schedule';
+import { AddInformationDto } from './dto/add-information.dto';
+import { DataSource, QueryRunner } from 'typeorm';
+import { MailService } from '@/mail/mail.service';
 
 @Injectable()
 export class BookingService {
@@ -45,31 +52,44 @@ export class BookingService {
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
 
+    @InjectRepository(Discount)
+    private readonly discountRepository: Repository<Discount>,
+
     @InjectRepository(RoomType)
     private readonly roomTypeRepository: Repository<RoomType>,
 
     private readonly minioService: MinioService,
-  ) {}
 
+    private readonly redisService: RedisService,
+
+    private readonly dataSource: DataSource,
+
+    private mailService: MailService,
+  ) { }
+
+  // Bắt đầu quá trình booking
   async create(
     createBookingDto: CreateBookingDto,
-    req: Request,
-    res: Response,
   ) {
     try {
       const {
         hotelId,
         checkInDate,
         checkOutDate,
-        roomType2,
-        roomType4,
-        type2Price,
-        type4Price,
-        sumPrice,
+        roomType2, // Số lượng phòng 2
+        roomType4, // Số lượng phòng 4
         userId,
       } = createBookingDto;
-      // Tạm thời xử lý với phòng có trường là available trước
-      // Lấy ra danh sách phòng của khách sạn
+
+      const hotelQuery = await this.hotelRepository
+        .createQueryBuilder('hotel')
+        .select([
+          'hotel.name AS name'
+        ])
+        .where('hotel.id = :hotelId', { hotelId })
+      const hotel = await hotelQuery.getRawOne();
+      const hotelName = hotel.name;
+      // Lấy ra danh sách phòng đang trống của khách sạn
       const availableRoomQuery = await this.roomRepository
         .createQueryBuilder('room')
         .leftJoin('room.hotel', 'hotel')
@@ -85,6 +105,7 @@ export class BookingService {
       const availableRoom = await availableRoomQuery.getRawMany();
       console.log('AVAILABLE ROOMS: ', availableRoom);
 
+      // Lấy ra danh sách phòng đang được đặt nhưng có ngày không trùng với lại ngày đặt của người khác
       const canBookingQuery = await this.bookingRepository
         .createQueryBuilder('booking')
         .leftJoin('booking.bookingRooms', 'bookingRoom')
@@ -107,7 +128,6 @@ export class BookingService {
 
       const canBooking = await canBookingQuery.getRawMany();
       // console.log('CAN BOOKING: ', canBooking);
-
       const rooms = [...availableRoom, ...canBooking];
       // console.log('ALL AVAILABLE ROOMS: ', rooms);
       // Lấy ra phòng loại 2 và 4
@@ -118,7 +138,6 @@ export class BookingService {
         const shuffled = roomsList.sort(() => 0.5 - Math.random());
         return shuffled.slice(0, count);
       };
-
       // Lấy random ra số lượng phòng cho khách hàng
       const randomRoomsType2 = getRandomRooms(roomsType2, roomType2);
       const randomRoomsType4 = getRandomRooms(roomsType4, roomType4);
@@ -136,43 +155,56 @@ export class BookingService {
         .where('id IN (:...roomIds)', { roomIds })
         .execute();
 
+      // Query roomType để lấy ra giá tiền và tính toán giá tiền 
+      const roomTypeQuery = await this.roomTypeRepository
+        .createQueryBuilder('roomType')
+        .select(['roomType.type AS type',
+          'roomType.price AS price',
+          'roomType.weekend_price AS weekend_price'])
+        .where('roomType.hotelId = :hotelId', { hotelId })
+      const roomType = await roomTypeQuery.getRawMany();
+      // console.log('ROOMTYPE: ', roomType);
+
+      const room4 = roomType.filter(room => room.type === 4)[0] || null;
+      // console.log('ROOM4: ', room4);
+      const room2 = roomType.filter(room => room.type === 2)[0] || null;
+      // console.log('ROOM2: ', room2);
+
+      const totalRoom2 = await this.calculateTotalPrice(room2, roomType2, checkInDate, checkOutDate);
+      // console.log('TOTAL ROOM 2: ', totalRoom2);
+      const totalRoom4 = await this.calculateTotalPrice(room4, roomType4, checkInDate, checkOutDate);
+      // console.log('TOTAL ROOM 4: ', totalRoom4);
+      const sumPrice = totalRoom2 + totalRoom4;
+
       const bookingData = {
         hotelId,
+        hotelName,
         userId,
         checkInDate,
         checkOutDate,
         roomType2,
-        type2Price,
+        type2Price: room2.price,
+        type2WeekendPrice: room2.weekend_price,
         roomType4,
-        type4Price,
+        type4Price: room4.price,
+        type4WeekendPrice: room4.weekend_price,
         sumPrice,
         rooms: selectedRooms,
         createdAt: Date.now(),
       };
-
-      // console.log('BOOKING DATA: ', bookingData);
-
-      // Lưu vào cookie với thời gian hết hạn là 5 phút
-      res.cookie('bookingData', JSON.stringify(bookingData), {
-        maxAge: 5 * 60 * 1000,
-        httpOnly: true,
-      });
+      await this.redisService.set(`bookingData:${userId}`, bookingData, 300);
 
       const oldState = {
         hotelId,
         availableRoom,
         canBooking,
       };
-      console.log('OLD STATE: ', oldState);
-      res.cookie('oldState', JSON.stringify(oldState), {
-        maxAge: 6 * 60 * 1000,
-        httpOnly: true,
-      });
+      await this.redisService.set(`oldState:${userId}`, oldState, 360);
 
-      return res.status(200).json({
-        message: 'Booking data saved to cookie',
+      return {
+        message: 'Booking data and old state saved to redis',
         bookingData,
-      });
+      };
     } catch (error) {
       console.error('Error booking hotels:', error);
 
@@ -186,16 +218,58 @@ export class BookingService {
     }
   }
 
+  // Tính toán tổng giá tiền 
+  private async calculateTotalPrice(room, numRooms, checkInDate, checkOutDate) {
+    const startDate = new Date(checkInDate);
+    const endDate = new Date(checkOutDate);
+    let totalPrice = 0;
+
+    for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay(); // 0: Chủ Nhật, 6: Thứ Bảy
+
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        totalPrice += room.weekend_price * numRooms; // Giá cuối tuần * số lượng phòng
+      } else {
+        totalPrice += room.price * numRooms; // Giá ngày thường * số lượng phòng
+      }
+    }
+
+    return totalPrice;
+  }
+
   // Kiểm tra xem booking còn hạn không
-  async checkBooking(req: Request, res: Response) {
+  async checkBooking(req: Request) {
     try {
-      const bookingData = req.cookies['bookingData'];
-
-      // Kiểm tra cookie bookingData
+      const user = req.user as any;
+      // console.log('USER: ', user);
+      const userId = user.id;
+      console.log('USER ID: ', userId);
+      if (!userId) {
+        throw new HttpException(
+          {
+            status_code: HttpStatus.UNAUTHORIZED,
+            message: 'User is not authenticated',
+          },
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+      const redisKey = `bookingData:${userId}`;
+      console.log('🔍 Checking Redis Key:', redisKey);
+      const bookingData = await this.redisService.get(redisKey);
+      console.log('📌 Redis GET bookingData Result:', bookingData);
+      // Kiểm tra xem redis bookingData còn hạn không
       if (!bookingData) {
-        const oldStateCookie = req.cookies['oldState'];
-
-        const oldState = JSON.parse(oldStateCookie);
+        const oldState = await this.redisService.get(`oldState:${userId}`);
+        // console.log('OLD STATE: ', oldState);
+        if (!oldState) {
+          throw new HttpException(
+            {
+              status_code: HttpStatus.NOT_FOUND,
+              message: 'Old state data not found in Redis',
+            },
+            HttpStatus.NOT_FOUND,
+          );
+        }
         const { hotelId, availableRoom, canBooking } = oldState;
 
         // Lấy danh sách ID từ availableRoom và canBooking
@@ -229,34 +303,101 @@ export class BookingService {
         }
 
         // Trả về lỗi phù hợp
-        return res.status(HttpStatus.FORBIDDEN).json({
-          status_code: HttpStatus.FORBIDDEN,
-          message: 'Booking data has expired or not found',
-        });
+        throw new HttpException(
+          {
+            status_code: HttpStatus.FORBIDDEN,
+            message: 'Booking data has expired or not found',
+          },
+          HttpStatus.FORBIDDEN,
+        );
       }
-      // Nếu có bookingData, phân tích và trả về kết quả
-      const parsedBookingData = JSON.parse(bookingData);
-      return res.status(HttpStatus.OK).json({
+
+      return {
         status_code: HttpStatus.OK,
         message: 'Booking data is valid',
-        bookingData: parsedBookingData,
-      });
+        bookingData,
+      };
     } catch (error) {
       console.error('Error checking booking:', error);
     }
   }
 
+  @Cron('*/1 * * * *') // Chạy mỗi 1 phút
+  async autoResetRoomStatus() {
+    console.log('🔄 Running cron job to reset room status...');
+
+    try {
+      const keys = await this.redisService.keys('oldState:*'); // Lấy tất cả key oldState:userId
+      for (const key of keys) {
+        const userId = key.split(':')[1]; // Lấy userId từ key Redis
+
+        // Kiểm tra xem bookingData có còn tồn tại không
+        const bookingData = await this.redisService.get(`bookingData:${userId}`);
+        if (bookingData) {
+          console.log(`⏳ Booking still active for user ${userId}, skipping reset.`);
+          continue; // Nếu bookingData vẫn còn, bỏ qua user này
+        }
+
+        // Nếu bookingData không còn => Lấy oldState để reset trạng thái phòng
+        const oldState = await this.redisService.get(key);
+        if (!oldState) continue;
+
+        const { hotelId, availableRoom, canBooking } = oldState;
+
+        const availableRoomIds = availableRoom.map((room) => room.id);
+        const canBookingIds = canBooking.map((room) => room.id);
+
+        // Cập nhật trạng thái "booked" cho canBooking
+        if (canBookingIds.length > 0) {
+          await this.roomRepository
+            .createQueryBuilder()
+            .update()
+            .set({ status: 'booked' })
+            .where('hotelId = :hotelId AND id IN (:...ids)', {
+              hotelId,
+              ids: canBookingIds,
+            })
+            .execute();
+        }
+
+        // Cập nhật trạng thái "available" cho availableRoom
+        if (availableRoomIds.length > 0) {
+          await this.roomRepository
+            .createQueryBuilder()
+            .update()
+            .set({ status: 'available' })
+            .where('hotelId = :hotelId AND id IN (:...ids)', {
+              hotelId,
+              ids: availableRoomIds,
+            })
+            .execute();
+        }
+
+        // Xóa key Redis sau khi cập nhật xong
+        await this.redisService.del(key);
+        console.log(`✅ Reset status for user ${userId}`);
+      }
+    } catch (error) {
+      console.error('❌ Error in autoResetRoomStatus cron job:', error);
+    }
+  }
+
+  // Lấy ra thông tin để hiển thị
   async getInformation(req: Request) {
     try {
-      const bookingDT = req.cookies['bookingData'];
-      if (!bookingDT) {
+      const userLogin = req.user as any;
+      const userId = userLogin.id;
+
+      const redisKey = `bookingData:${userId}`;
+      console.log('🔍 Checking Redis Key:', redisKey);
+      const bookingData = await this.redisService.get(redisKey);
+      if (!bookingData) {
         throw new HttpException(
           'Booking data not found in cookies',
           HttpStatus.NOT_FOUND,
         );
       }
-      const bookingData = JSON.parse(bookingDT);
-      console.log('BOOKING DATA: ', bookingData);
+      console.log('📌 Redis GET Result:', bookingData);
 
       // Lấy ra thông tin hotel
       const hotelId = bookingData.hotelId;
@@ -274,7 +415,6 @@ export class BookingService {
       // console.log('HOTEL: ', hotel);
 
       // Lấy ra thông tin người dùng
-      const userId = bookingData.userId;
       const userQuery = await this.userRepository
         .createQueryBuilder('user')
         .select([
@@ -286,6 +426,14 @@ export class BookingService {
       const user = await userQuery.getRawOne();
       // console.log('USER: ', user);
 
+      // Lấy ra các discount của khách sạn đó
+      const discountQuery = await this.discountRepository
+        .createQueryBuilder('discount')
+        .where('discount.hotelId = :hotelId', { hotelId })
+        .andWhere('discount.status = :status', { status: 'active' });
+      const discount = await discountQuery.getRawMany();
+      console.log('DISCOUNT: ', discount);
+
       const data = {
         hotel: hotel,
         checkInDate: bookingData.checkInDate,
@@ -295,6 +443,7 @@ export class BookingService {
         roomType4: bookingData.roomType4,
         type4Price: bookingData.type4Price,
         sumPrice: bookingData.sumPrice,
+        discount: discount,
         user: user,
       };
 
@@ -315,19 +464,32 @@ export class BookingService {
     }
   }
 
-  async addNote(res: Response, note: string) {
+  // Thêm note
+  async addInformation(req: Request, addInformation: AddInformationDto) {
     try {
-      res.cookie('note', JSON.stringify(note), {
-        maxAge: 5 * 60 * 1000,
-        httpOnly: true,
-      });
+      const { note, totalPrice } = addInformation;
+      console.log('NOTE: ', note);
+      console.log('TOTAL PRICE: ', totalPrice);
 
-      return res.status(HttpStatus.OK).json({
-        message: 'Note added successfully to booking data',
+      const userLogin = req.user as any;
+      const userId = userLogin.id;
+
+      await this.redisService.set(`notes:${userId}`, note, 300);
+
+      const id_discount = 0; // Ở đẩy để là 0 có nghĩa là không có áp dụng discount ngay đây
+      const discountData = {
+        id_discount,
+        totalPrice
+      }
+
+      await this.redisService.set(`discounts:${userId}`, discountData, 300);
+      return {
+        message: 'Note added successfully to note redis',
         note,
-      });
+        totalPrice
+      };
     } catch (error) {
-      console.error('Error booking hotels:', error);
+      console.error('Error add note:', error);
 
       throw new HttpException(
         {
@@ -339,54 +501,115 @@ export class BookingService {
     }
   }
 
-  async processPayment(req: Request, res: Response, paymentMethod) {
+  // Áp dụng discount
+  async applyDiscount(req: Request, id_discount: number, oldSumPrice: number) {
     try {
-      // console.log('PAYMENTMETHOD: ', paymentMethod);
-      // Kiểm tra xem có thông tin booking trong cookie không
-      const bookingDT = req.cookies['bookingData'];
-      const noteDT = req.cookies['note'];
-      if (!bookingDT || !noteDT) {
+      const userLogin = req.user as any;
+      const userId = userLogin.id;
+
+      const discountQuery = await this.discountRepository
+        .createQueryBuilder('discount')
+        .where('discount.id = :id_discount', { id_discount });
+      const discount = await discountQuery.getRawOne();
+      console.log('APPLIED DISCOUNT: ', discount);
+
+      const value = discount.discount_value;
+      const type = discount.discount_type;
+      console.log('DISCOUNT VALUE: ', value);
+      let totalPrice = oldSumPrice;
+      let discountAmount = 0;
+      if (type === 'percentage') {
+        discountAmount = value * oldSumPrice / 100;
+      } else if (type === 'fix amount') {
+        discountAmount = value;
+      }
+      console.log('DISCOUNT AMOUNT: ', discountAmount);
+      totalPrice = oldSumPrice - discountAmount;
+
+      const discountData = {
+        id_discount,
+        totalPrice
+      }
+
+      await this.redisService.set(`discounts:${userId}`, discountData, 300);
+      return {
+        message: 'New sum price added successfully to discount redis',
+        discountAmount,
+        totalPrice
+      };
+    } catch (error) {
+      console.error('Error apply discount:', error);
+
+      throw new HttpException(
+        {
+          status_code: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: 'Internal server error',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Kết thúc quá trình booking
+  async processPayment(req: Request, paymentMethod) {
+    try {
+      const userLogin = req.user as any;
+      const userId = userLogin.id;
+      // console.log('USER ID: ', userId);
+
+      // Lấy ra email của userId đó 
+      const email = userLogin.email;
+
+      const bookingData = await this.redisService.get(`bookingData:${userId}`);
+      console.log('BOOKING DATA: ', bookingData);
+      const note = await this.redisService.get(`notes:${userId}`);
+      console.log('NOTE: ', note);
+      const discount = await this.redisService.get(`discounts:${userId}`);
+      console.log('DISCOUNT: ', discount);
+
+      if (!bookingData || !note || !discount) {
         throw new HttpException(
-          'Booking data not found in cookies',
+          'Booking data not found in redis',
           HttpStatus.NOT_FOUND,
         );
       }
-      const bookingData = JSON.parse(bookingDT);
-      const note = JSON.parse(noteDT);
-      // console.log('NOTE: ', note);
 
       if (paymentMethod === 'cash') {
         const paymentStatus = 'unpaid';
         const bookingStatus = 'confirmed';
-        // console.log('VAO DUOC PAYMENT CASH');
-        // console.log('BOOKING DATA TRUOC KHI VAO: ', bookingData);
+
         await this.saveDataIntoDatabase(
           bookingData,
+          discount,
           paymentStatus,
           bookingStatus,
           note,
           paymentMethod,
         );
-        res.clearCookie('bookingData');
-        return res.status(HttpStatus.OK).json({
+        await this.mailService.sendInvoice(email, bookingData, note, discount, paymentMethod);
+        await this.redisService.del(`bookingData:${userId}`);
+        await this.redisService.del(`oldState:${userId}`);
+        await this.redisService.del(`notes:${userId}`);
+        await this.redisService.del(`discounts:${userId}`);
+        return {
           status_code: HttpStatus.OK,
           message: 'Cash successful, information saved to database.',
-        });
+        };
       } else if (paymentMethod === 'momo') {
         const orderInfo = `Thanh toán đặt phòng khách sạn thông qua trang web đặt phòng BookAstay`;
 
         const paymentUrl = await this.createMomoPayment(
-          res,
           orderInfo,
           bookingData,
           note,
+          discount
         );
         console.log('Payment URL:', paymentUrl);
-        return res.status(HttpStatus.OK).json({
+        return {
           status_code: HttpStatus.OK,
           message: 'Redirect to MoMo for payment.',
           paymentUrl,
-        });
+        };
       }
 
       // Trả về lỗi nếu phương thức thanh toán không hợp lệ
@@ -404,10 +627,10 @@ export class BookingService {
   }
 
   private async createMomoPayment(
-    res: Response,
     orderInfo: string,
     bookingData,
     note,
+    discount
   ) {
     const accessKey = process.env.MOMO_ACCESS_KEY;
     const secretKey = process.env.MOMO_SECRET_KEY;
@@ -417,7 +640,7 @@ export class BookingService {
     var ipnUrl =
       'https://6bfc-113-185-82-137.ngrok-free.app/callback';
     var requestType = 'payWithMethod';
-    var amount = bookingData.sumPrice;
+    var amount = discount.totalPrice;
     var orderId = partnerCode + new Date().getTime();
     var requestId = orderId;
     var orderGroupId = '';
@@ -425,7 +648,7 @@ export class BookingService {
     var lang = 'vi';
 
     const extraData = Buffer.from(
-      JSON.stringify({ bookingData, note }),
+      JSON.stringify({ bookingData, note, discount }),
     ).toString('base64');
 
     //before sign HMAC SHA256 with format
@@ -516,21 +739,31 @@ export class BookingService {
   }
 
   async updatePaymentStatus(req: Request, res: Response, body) {
-    // console.log('BODY: ', body);
+    const userLogin = req.user as any;
+    const userId = userLogin.id;
+    const email = userLogin.email;
+
     const extraData = Buffer.from(body.extraData, 'base64').toString('utf-8');
-    const { bookingData, note } = JSON.parse(extraData);
-    // console.log('NOTE: ', note);
+    const { bookingData, note, discount } = JSON.parse(extraData);
     const resultCode = body.resultCode;
+
     if (resultCode === 0) {
       const paymentStatus = 'paid';
       const bookingStatus = 'confirmed';
+      const paymentMethod = 'momo';
       this.saveDataIntoDatabase(
         bookingData,
+        discount,
         paymentStatus,
         bookingStatus,
         note,
-        'momo',
+        paymentMethod,
       );
+      await this.mailService.sendInvoice(email, bookingData, note, discount, paymentMethod);
+      await this.redisService.del(`bookingData:${userId}`);
+      await this.redisService.del(`oldState:${userId}`);
+      await this.redisService.del(`notes:${userId}`);
+      await this.redisService.del(`discounts:${userId}`);
       return res.status(HttpStatus.OK).json({
         message: 'Payment success, save data into database',
         data: { paymentStatus, bookingData },
@@ -542,13 +775,13 @@ export class BookingService {
     }
   }
 
-  private async saveBooking(bookingData: any, status: string, note) {
+  private async saveBooking(bookingData: any, status: string, note: string, queryRunner) {
     try {
       const userId = bookingData.userId;
       const hotelId = bookingData.hotelId;
       const checkInDate = bookingData.checkInDate;
       const checkOutDate = bookingData.checkOutDate;
-      const bookingQuery = await this.bookingRepository
+      const bookingQuery = await queryRunner.manager
         .createQueryBuilder()
         .insert()
         .into('booking')
@@ -558,7 +791,7 @@ export class BookingService {
           checkinTime: checkInDate,
           checkoutTime: checkOutDate,
           status: status,
-          note: note.note,
+          note: note,
         })
         .returning('id')
         .execute();
@@ -570,11 +803,11 @@ export class BookingService {
     }
   }
 
-  private async saveBookingDetail(bookingId: number, bookingData: any) {
+  private async saveBookingDetail(bookingId: number, bookingData: any, queryRunner) {
     try {
       // console.log('BOOKING ID BEFORE QUERY: ', bookingId);
       // console.log('BOOKING DATA: ', bookingData);
-      const bookingDetailQuery = await this.bookingDetailRepository
+      await queryRunner.manager
         .createQueryBuilder()
         .insert()
         .into(BookingDetail)
@@ -599,9 +832,9 @@ export class BookingService {
     }
   }
 
-  private async saveBookingRoom(bookingId: number, bookingData: any) {
+  private async saveBookingRoom(bookingId: number, bookingData: any, queryRunner) {
     try {
-      const bookingRoomQuery = await this.bookingRoomRepository
+      await queryRunner.manager
         .createQueryBuilder()
         .insert()
         .into(BookingRoom)
@@ -620,40 +853,16 @@ export class BookingService {
     }
   }
 
-  private async createPayment(
-    bookingId: number,
-    bookingData: any,
-    paymentMethod: string,
-    status: string,
-  ) {
-    try {
-      const paymentQuery = await this.paymentRepository
-        .createQueryBuilder()
-        .insert()
-        .into(Payment)
-        .values({
-          method: paymentMethod,
-          status: status,
-          booking: { id: bookingId },
-          totalCost: bookingData.sumPrice,
-        })
-        .execute();
-    } catch (error) {
-      console.error('Error saving payment:', error);
-      throw error;
-    }
-  }
-
-  private async setStatusRoom(bookingData: any) {
+  private async setStatusRoom(bookingData: any, queryRunner) {
     try {
       const hotelId = bookingData.hotelId;
       const rooms = bookingData.rooms;
       const roomIds = rooms.map((room) => room.id);
       if (roomIds.length > 0) {
         // Cập nhật trạng thái "booked" cho các phòng đã được đặt thành công
-        await this.roomRepository
+        await queryRunner.manager
           .createQueryBuilder()
-          .update()
+          .update('room')
           .set({ status: 'booked' })
           .where('hotelId = :hotelId AND id IN (:...ids)', {
             hotelId,
@@ -667,30 +876,92 @@ export class BookingService {
     }
   }
 
+  private async createPayment(
+    bookingId: number,
+    bookingData: any,
+    discount: any,
+    paymentMethod: string,
+    status: string,
+    queryRunner
+  ) {
+    try {
+      await queryRunner.manager
+        .createQueryBuilder()
+        .insert()
+        .into(Payment)
+        .values({
+          method: paymentMethod,
+          status: status,
+          booking: { id: bookingId },
+          totalCost: discount.totalPrice,
+        })
+        .execute();
+    } catch (error) {
+      console.error('Error saving payment:', error);
+      throw error;
+    }
+  }
+
+  private async updateDiscount(discount: any, queryRunner) {
+    try {
+      const id_discount = discount.id_discount;
+
+      if (id_discount) {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update('discounts')
+          .set({ num: () => 'num - 1' }) // Giảm num đi 1
+          .where('id = :id_discount', { id_discount })
+          .execute();
+
+        console.log(`Discount ID ${id_discount} updated successfully.`);
+      }
+    } catch (error) {
+      console.error('Error updating discount:', error);
+      throw error;
+    }
+  }
+
   private async saveDataIntoDatabase(
     bookingData: any,
+    discount: any,
     paymentStatus: string,
     bookingStatus: string,
     note: string,
     paymentMethod: string,
   ) {
+    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction(); // Bắt đầu transaction
     try {
       const bookingId = await this.saveBooking(
         bookingData,
         bookingStatus,
         note,
+        queryRunner
       );
       // console.log('BOOKING ID: ', bookingId);
-      await this.saveBookingDetail(bookingId, bookingData);
-      await this.saveBookingRoom(bookingId, bookingData);
-      await this.setStatusRoom(bookingData);
+      await this.saveBookingDetail(bookingId, bookingData, queryRunner);
+      await this.saveBookingRoom(bookingId, bookingData, queryRunner);
+      await this.setStatusRoom(bookingData, queryRunner);
       await this.createPayment(
         bookingId,
         bookingData,
+        discount,
         paymentMethod,
         paymentStatus,
+        queryRunner
       );
+      // Nếu có áp dụng discount thì mới cập nhật
+      const id_discount = discount.id_discount;
+      if (!id_discount) {
+        await this.updateDiscount(discount, queryRunner);
+      }
+      // Commit nếu không có lỗi
+      await queryRunner.commitTransaction();
     } catch (error) {
+      // Rollback nếu có lỗi
+      await queryRunner.rollbackTransaction();
       console.error('Error saving data into database:', error);
       throw new HttpException(
         {
@@ -699,6 +970,9 @@ export class BookingService {
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    } finally {
+      // Giải phóng tài nguyên
+      await queryRunner.release();
     }
   }
 
@@ -926,12 +1200,13 @@ export class BookingService {
       ]);
       const totalPages = Math.ceil(totalBookings / per_page);
 
-      // Kiểm tra cookie 'bookingData'
-      const bookingDT = req.cookies['bookingData'];
+      const redisKey = `bookingData:${userId}`;
+      // console.log('🔍 Checking Redis Key:', redisKey);
+      const bookingData = await this.redisService.get(redisKey);
+      // console.log('📌 Redis GET Result:', bookingData);
       let tempBooking = null;
 
-      if (bookingDT) {
-        const bookingData = JSON.parse(bookingDT);
+      if (bookingData) {
 
         const hotelId = bookingData.hotelId;
         const hotelQuery = await this.hotelRepository
@@ -970,18 +1245,6 @@ export class BookingService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} booking`;
-  }
-
-  update(id: number, updateBookingDto: UpdateBookingDto) {
-    return `This action updates a #${id} booking`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} booking`;
   }
 
   async totalReservation(id: number) {

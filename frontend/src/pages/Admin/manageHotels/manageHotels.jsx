@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./manageHotels.css";
 import icons from "~/assets/icon";
 import { useSelector } from "react-redux";
+import hotelDetailsl from "./hotelDetails.jsx";
 
 import axios from "~/utils/axiosCustomize";
 
@@ -14,6 +15,7 @@ function ManageHotels() {
   const [loading, setLoading] = useState(true);
   const [selectedHotelId, setSelectedHotelId] = useState(null);
   const [totalHotels, setTotalHotels] = useState(0); // State để lưu tổng số người dùng
+    const navigate = useNavigate();
 
     const [inputPage, setInputPage] = useState(""); // Input cho số trang
     const handleInputPageChange = (e) => {
@@ -121,6 +123,7 @@ function ManageHotels() {
                                     style={{
                                         cursor: "pointer",
                                     }}
+                                    onClick={() => navigate(`/admin/manage-hotels/${app.id}`, { state: app })}
                                 >
                                     <td>{app.id}</td>
                                     <td>{app.name}</td>

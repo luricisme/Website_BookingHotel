@@ -40,6 +40,7 @@ import ManageHotels from "../pages/Admin/manageHotels/manageHotels";
 import ManageRequests from "../pages/Admin/manageRequets/manageRequests";
 import AdminLogin from "../pages/Admin/login/login";
 import RequestDetails from "../pages/Admin/RequestDetails/requestDetails";
+import AdminHotelDetails from "../pages/Admin/manageHotels/hotelDetails";
 import NotFound from "~/pages/NotFound/NotFound";
 
 const publicRoutes = [
@@ -212,6 +213,12 @@ const publicRoutes = [
         path: "/admin/manage-hotels",
         layout: AdminLayout,
         component: ManageHotels,
+        requiredRole: ["admin"],
+    },
+    {
+        path: "/admin/manage-hotels/:id",
+        layout: AdminLayout,
+        component: AdminHotelDetails,
         requiredRole: ["admin"],
     },
     {

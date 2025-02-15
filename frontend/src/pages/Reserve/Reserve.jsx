@@ -30,6 +30,7 @@ import PaymentInfo from "./PaymentInfo";
 import HotelInfo from "./HotelInfo";
 import { formatDate } from "../../utils/datetime";
 import PriceSummary from "./PriceSummary";
+import CouponSelector from "./CouponSelector";
 
 const StyledStepLabel = styled.div`
     font-size: 2.8rem;
@@ -365,6 +366,12 @@ const Reserve = () => {
         }
     };
 
+    const handleApplyCoupon = (coupon, discountAmount) => {
+        // Xử lý logic khi áp dụng mã giảm giá
+        console.log("Mã giảm giá:", coupon);
+        console.log("Số tiền giảm:", discountAmount);
+    };
+
     if ((resultCode && resultCode === "0") || isFinishCashPayment) {
         return (
             <Result
@@ -482,6 +489,15 @@ const Reserve = () => {
                                         navigate={navigate}
                                         t={t}
                                     />
+                                </div>
+
+                                <div className="col">
+                                    <div className="reserve-container">
+                                        <CouponSelector
+                                            onApplyCoupon={handleApplyCoupon}
+                                            totalAmount={sumPrice}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="col">

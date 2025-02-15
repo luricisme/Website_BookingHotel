@@ -32,6 +32,7 @@ import { DailyCheckService } from './helpers/DailyCheckService';
 import { RolesGuard } from './auth/guard/role.guard';
 import { DiscountModule } from './module/discount/discount.module';
 import { RedisModule } from './redis/redis.module';
+import { VisitCounterMiddleware } from './middleware/visit_counter.middleware';
 
 @Module({
   imports: [
@@ -128,11 +129,6 @@ export class AppModule implements NestModule {
   }
 
   configure(consumer: MiddlewareConsumer) {
-    //consumer.apply(LoggerMiddleware).forRoutes({path: 'users/*', method: RequestMethod.GET});
-    // consumer
-    //   //.apply(LoggerMiddleware)
-    //   .apply(logger, LoggerMiddleware)
-    //   .exclude({path: 'users/getAllUsers/:id/:name', method: RequestMethod.GET})
-    //   .forRoutes(UserController);
+    consumer.apply(VisitCounterMiddleware).forRoutes('/');
   }
 }

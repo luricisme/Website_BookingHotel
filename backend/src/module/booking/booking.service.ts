@@ -506,6 +506,7 @@ export class BookingService {
     try {
       const userLogin = req.user as any;
       const userId = userLogin.id;
+      console.log('ID DISCOUNT: ', id_discount);
 
       const discountQuery = await this.discountRepository
         .createQueryBuilder('discount')
@@ -520,7 +521,7 @@ export class BookingService {
       let discountAmount = 0;
       if (type === 'percentage') {
         discountAmount = value * oldSumPrice / 100;
-      } else if (type === 'fix amount') {
+      } else if (type === 'fixed') {
         discountAmount = value;
       }
       console.log('DISCOUNT AMOUNT: ', discountAmount);

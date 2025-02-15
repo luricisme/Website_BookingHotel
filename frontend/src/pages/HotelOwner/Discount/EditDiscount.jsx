@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, InputNumber, DatePicker, Select, Button, message } from "antd";
+import { Modal, Form, InputNumber, DatePicker, Select, Button, message } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { updateDiscount } from "../../../services/apiService";

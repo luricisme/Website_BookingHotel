@@ -25,9 +25,8 @@ import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 
-
 import axios from "~/utils/axiosCustomize";
-import {Spin} from "antd";
+import { Spin } from "antd";
 
 const HotelDetails = () => {
     const { t } = useTranslation();
@@ -232,7 +231,9 @@ const HotelDetails = () => {
     }, [id, location.state]);
 
     if (!isLoaded)
-        return <Spin style={{ display: "block", margin: "200px auto" }}
+        return (
+            <Spin
+                style={{ display: "block", margin: "200px auto" }}
                 indicator={
                     <LoadingOutlined
                         style={{
@@ -243,7 +244,8 @@ const HotelDetails = () => {
                     />
                 }
                 size="large"
-            ></Spin>;
+            ></Spin>
+        );
 
     if (!hotelDetails) return <div>No details available</div>;
 
@@ -252,12 +254,12 @@ const HotelDetails = () => {
     const displayedImages = showAllImages ? images : images.slice(0, 5);
 
     const handleReserve = async () => {
-        if (!userInfo.email) {
-            toast.error("Please login to reserve", {
-                position: "top-center",
-            });
-            return;
-        }
+        // if (!userInfo.email) {
+        //     toast.error("Please login to reserve", {
+        //         position: "top-center",
+        //     });
+        //     return;
+        // }
 
         const numberOfRoom2 =
             roomCounts[hotelDetails.room_types.find((room) => room.type === 2).id] || 0;

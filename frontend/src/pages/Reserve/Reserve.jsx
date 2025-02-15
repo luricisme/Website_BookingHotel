@@ -825,7 +825,7 @@ const Reserve = () => {
 
                                         <div className="d-flex justify-content-between">
                                             <span>{t("reserve.discount")}</span>
-                                            <span className="ms-3">-0 VND</span>
+                                            <span className="ms-3">0 VND</span>
                                         </div>
 
                                         <div className="d-flex justify-content-between mt-5 fs-4  fw-bold">

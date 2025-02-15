@@ -32,4 +32,23 @@ export class MailService {
       },
     });
   }
+
+   async sendInvoice(email: string, bookingData: any, note: any, discount: any, paymentMethod: string){
+      try{
+        await this.mailerService.sendMail({
+          to: email,
+          subject: 'Confirm booking successfully - BookAstay',
+          template: './invoice', 
+          context: {
+            email,
+            bookingData,
+            discount,
+            note,
+            paymentMethod
+          },
+        });
+      } catch(error){
+        console.error('Error while sending confirm booking email:', error);
+      }
+    }
 }

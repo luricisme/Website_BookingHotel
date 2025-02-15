@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { generatingRandomCode } from '@/helpers/utils';
+import { Request } from 'express';
 
 @Injectable()
 export class DiscountService {
@@ -13,13 +14,26 @@ export class DiscountService {
         private readonly discountRepository: Repository<Discount>,
     ) {}
 
-    async getAll(hotelId: number) {
-        return await this.discountRepository.find({where: {hotelId}});
+    async getAll(hotelId: number, req: Request) {
+        const {
+            page = 1,
+            limit = 5,
+            sortBy = 'id',
+            order = 'ASC',
+          } = req.query;
+        const take = limit as number;
+        const skip = ((page as number) - 1) * (limit as number);
+        return await this.discountRepository.find({
+            where: {hotelId},
+            order: {[(sortBy as string).toLowerCase()]: order},
+            skip,
+            take,
+        });
     }
 
     async createDiscount(req: any, createDiscountDto: CreateDiscountDto) {
         let code = createDiscountDto.code;
-        if (!code) {
+        if (code.length < 1) {
             code = generatingRandomCode(10);
         }
         const discount = {code, ...createDiscountDto, hotel: req.user.hotel};

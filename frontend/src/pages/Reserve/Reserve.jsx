@@ -25,7 +25,11 @@ import {
     postBookingInfo,
 } from "~/services/apiService";
 import { useLocation, useNavigate } from "react-router-dom";
-import { formatCheckInOutDate, formatDate } from "~/utils/datetime";
+import UserInfo from "./UserInfo";
+import PaymentInfo from "./PaymentInfo";
+import HotelInfo from "./HotelInfo";
+import { formatDate } from "../../utils/datetime";
+import PriceSummary from "./PriceSummary";
 
 const StyledStepLabel = styled.div`
     font-size: 2.8rem;
@@ -73,10 +77,10 @@ const Reserve = () => {
                 toast.error("Failed to get booking information");
             }
         };
-        if (location.state && location.state.isReturn) {
-            fetchBookingInfo();
-        }
-    }, []);
+        // if (location.state && location.state.isReturn) {
+        fetchBookingInfo();
+        // }
+    }, [JSON.stringify(location.state)]);
 
     const searchParams = new URLSearchParams(location.search);
 
@@ -361,19 +365,6 @@ const Reserve = () => {
         }
     };
 
-    const roomsInfoRef = useRef();
-
-    const handleToggleIcon = (event) => {
-        event.target.style.transform = `rotate(${
-            event.target.style.transform === "rotate(-180deg)" ? "0deg" : "-180deg"
-        })`;
-
-        console.log(roomsInfoRef.current.className);
-
-        roomsInfoRef.current.className =
-            roomsInfoRef.current.className === "collapse" ? "collapse show" : "collapse";
-    };
-
     if ((resultCode && resultCode === "0") || isFinishCashPayment) {
         return (
             <Result
@@ -432,208 +423,14 @@ const Reserve = () => {
                     <div className="row gy-4 gx-2 gx-lg-3">
                         <div className="col-md-6 col-lg-7">
                             <div className="reserve-container">
-                                {currentStep === 2 && (
-                                    <>
-                                        {/* <h2>Enter your details</h2> */}
-                                        <h2>{t("reserve.detailHeader")}</h2>
-
-                                        <form className="mt-5" onSubmit={formik.handleSubmit}>
-                                            <div className="row row-cols-1 row-cols-lg-2">
-                                                <div className="col">
-                                                    <div className="mb-4">
-                                                        <label
-                                                            htmlFor="reserveFirstNameInput"
-                                                            className="form-label"
-                                                        >
-                                                            {t("reserve.name")}:{" "}
-                                                            <span className="red-dot">*</span>
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            name="name"
-                                                            disabled
-                                                            value={formik.values.name}
-                                                            onChange={formik.handleChange}
-                                                            className={`form-control form-control-lg fs-4  ${
-                                                                formik.errors.name &&
-                                                                formik.touched.name
-                                                                    ? "is-invalid"
-                                                                    : ""
-                                                            }`}
-                                                            id="reserveFirstNameInput"
-                                                            placeholder="Enter your name"
-                                                        />
-                                                        <div className="invalid-feedback">
-                                                            {formik.errors.name}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="col">
-                                                    <div className="mb-4">
-                                                        <label
-                                                            htmlFor="reserveLastNameInput"
-                                                            className="form-label"
-                                                        >
-                                                            {t("reserve.identityNumber")}:{" "}
-                                                            <span className="red-dot">*</span>
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            name="cccd"
-                                                            disabled
-                                                            value={formik.values.cccd}
-                                                            onChange={formik.handleChange}
-                                                            className={`form-control form-control-lg fs-4  ${
-                                                                formik.errors.cccd &&
-                                                                formik.touched.cccd
-                                                                    ? "is-invalid"
-                                                                    : ""
-                                                            }`}
-                                                            id="reserveLastNameInput"
-                                                            placeholder="Enter your cccd"
-                                                        />
-                                                        <div className="invalid-feedback">
-                                                            {formik.errors.cccd}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="mb-4">
-                                                <label
-                                                    htmlFor="reserveEmailInput"
-                                                    className="form-label"
-                                                >
-                                                    {t("reserve.email")}:{" "}
-                                                    <span className="red-dot">*</span>
-                                                </label>
-                                                <input
-                                                    type="email"
-                                                    name="email"
-                                                    disabled
-                                                    value={formik.values.email}
-                                                    onChange={formik.handleChange}
-                                                    className={`form-control form-control-lg fs-4  ${
-                                                        formik.errors.email && formik.touched.email
-                                                            ? "is-invalid"
-                                                            : ""
-                                                    }`}
-                                                    id="reserveEmailInput"
-                                                    placeholder="Enter your email"
-                                                />
-                                                <div className="invalid-feedback">
-                                                    {formik.errors.email}
-                                                </div>
-                                            </div>
-
-                                            <div className="row row-cols-1 row-cols-lg-2">
-                                                <div className="col">
-                                                    <div className="mb-4">
-                                                        <label
-                                                            htmlFor="reservePhoneInput"
-                                                            className="form-label"
-                                                        >
-                                                            {t("reserve.phone")}:{" "}
-                                                            <span className="red-dot">*</span>
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            name="phone"
-                                                            disabled
-                                                            value={formik.values.phone}
-                                                            onChange={formik.handleChange}
-                                                            className={`form-control form-control-lg fs-4  ${
-                                                                formik.errors.phone &&
-                                                                formik.touched.phone
-                                                                    ? "is-invalid"
-                                                                    : ""
-                                                            }`}
-                                                            id="reservePhoneInput"
-                                                            placeholder="Enter your phone number"
-                                                        />
-                                                        <div className="invalid-feedback">
-                                                            {formik.errors.phone}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="separate"></div>
-
-                                            <div className="mb-5">
-                                                <label
-                                                    className="form-label"
-                                                    htmlFor="reserveSpecialRequestTextarea"
-                                                >
-                                                    {t("reserve.specialRequests")}:
-                                                </label>
-                                                <textarea
-                                                    className="form-control fs-4 "
-                                                    placeholder="Enter your special request"
-                                                    id="reserveSpecialRequestTextarea"
-                                                    value={formik.values.specialRequest}
-                                                    onChange={formik.handleChange}
-                                                    name="specialRequest"
-                                                ></textarea>
-                                            </div>
-                                        </form>
-                                    </>
-                                )}
+                                {currentStep === 2 && <UserInfo formik={formik} />}
 
                                 {currentStep === 3 && (
-                                    <>
-                                        <h2>{t("reserve.paymentHeader")}</h2>
-
-                                        <div className="mt-5">
-                                            <div className="d-flex align-items-center justify-content-between">
-                                                <div className="form-check">
-                                                    <input
-                                                        className="form-check-input"
-                                                        type="radio"
-                                                        name="paymentMethod"
-                                                        id="momoMethod"
-                                                        value="momo"
-                                                        onChange={(event) =>
-                                                            setPaymentMethod(event.target.value)
-                                                        }
-                                                    />
-                                                    <label
-                                                        className="form-check-label ms-5"
-                                                        htmlFor="momoMethod"
-                                                    >
-                                                        Momo
-                                                    </label>
-                                                </div>
-
-                                                <img width={80} src={images.momoIcon} alt="" />
-                                            </div>
-
-                                            <div className="separate"></div>
-
-                                            <div className="d-flex align-items-center justify-content-between">
-                                                <div className="form-check">
-                                                    <input
-                                                        className="form-check-input"
-                                                        type="radio"
-                                                        name="paymentMethod"
-                                                        id="cashMethod"
-                                                        value="cash"
-                                                        onChange={(event) =>
-                                                            setPaymentMethod(event.target.value)
-                                                        }
-                                                    />
-                                                    <label
-                                                        className="form-check-label ms-5"
-                                                        htmlFor="cashMethod"
-                                                    >
-                                                        {t("reserve.cash")}
-                                                    </label>
-                                                </div>
-
-                                                <img width={80} src={images.cashIcon} alt="" />
-                                            </div>
-                                        </div>
-                                    </>
+                                    <PaymentInfo
+                                        t={t}
+                                        images={images}
+                                        setPaymentMethod={setPaymentMethod}
+                                    />
                                 )}
 
                                 {/* Action */}
@@ -665,178 +462,34 @@ const Reserve = () => {
                         <div className="col-md-6 col-lg-5">
                             <div className="row row-cols-1 gy-4">
                                 <div className="col">
-                                    <div className="reserve-container">
-                                        <h3>{t("reserve.bookingHeader")}</h3>
-
-                                        <div className="separate my-4 mx-0"></div>
-
-                                        {/* Hotel info */}
-                                        <div>
-                                            <div className="d-flex align-items-center gap-4 mb-1">
-                                                <span className="fw-lighter">
-                                                    {t("reserve.hotel")}
-                                                </span>
-                                                <div className="d-flex gap-1">
-                                                    {[
-                                                        ...Array(
-                                                            hotelDetail?.star ||
-                                                                bookingInfo?.hotel?.star ||
-                                                                0
-                                                        ),
-                                                    ].map((_, index) => (
-                                                        <img
-                                                            style={{ width: 20 }}
-                                                            key={index}
-                                                            src={icons.yellowStarIcon}
-                                                            alt="star"
-                                                            className="hotel-card__star-icon"
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <h2>{hotelDetail?.name || bookingInfo?.hotel?.name}</h2>
-                                            <p className="fw-light mt-3">
-                                                {hotelDetail?.address ||
-                                                    bookingInfo?.hotel?.address}
-                                            </p>
-                                        </div>
-                                        {/* Detail */}
-                                        <div>
-                                            <div className="d-flex mt-4">
-                                                <div>
-                                                    <span>Check-in</span>
-                                                    <h4 className="mt-2 fs-3 fw-bold">
-                                                        {formatCheckInOutDate(
-                                                            checkInDate ||
-                                                                tempInfo?.checkInDate ||
-                                                                bookingInfo?.checkInDate,
-                                                            localStorage.getItem("i18nextLng")
-                                                        )}
-                                                    </h4>
-                                                </div>
-
-                                                <div className="separate--vertical"></div>
-
-                                                <div>
-                                                    <span>Check-out</span>
-                                                    <h4 className="mt-2 fs-3 fw-bold">
-                                                        {formatCheckInOutDate(
-                                                            checkOutDate ||
-                                                                tempInfo?.checkOutDate ||
-                                                                bookingInfo?.checkOutDate,
-                                                            localStorage.getItem("i18nextLng")
-                                                        )}
-                                                    </h4>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="separate mx-0 mt-5 mb-4"></div>
-                                        {/* Room */}
-                                        <div>
-                                            <div className="d-flex align-items-center justify-content-between">
-                                                <div>
-                                                    <span className="fs-4  fw-medium">
-                                                        {t("reserve.yourChoice")}
-                                                    </span>
-                                                    <p className="fs-3 fw-bold">
-                                                        {numberOfRoom2 + numberOfRoom4 ||
-                                                            bookingInfo?.roomType2 +
-                                                                bookingInfo?.roomType4}{" "}
-                                                        {t("reserve.rooms")}
-                                                    </p>
-                                                </div>
-
-                                                <button>
-                                                    <img
-                                                        style={{
-                                                            width: 20,
-                                                            transition: "transform 0.5s",
-                                                        }}
-                                                        src={icons.chevronDownIcon}
-                                                        alt="chevron-down"
-                                                        onClick={(event) => handleToggleIcon(event)}
-                                                    />
-                                                </button>
-                                            </div>
-
-                                            <div
-                                                className="collapse"
-                                                ref={(ref) => (roomsInfoRef.current = ref)}
-                                            >
-                                                <p className="fw-medium">
-                                                    {bookingInfo?.roomType2 || numberOfRoom2} x{" "}
-                                                    {t("reserve.double")}
-                                                </p>
-                                                <p className="fw-medium">
-                                                    {bookingInfo?.roomType4 || numberOfRoom4} x{" "}
-                                                    {t("reserve.quadruple")}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <a
-                                            href="#!"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                navigate(`/hotel/${hotelId}`, {
-                                                    state: {
-                                                        checkInDate: formatDate(
-                                                            checkInDate,
-                                                            "yyyy-mm-dd"
-                                                        ),
-                                                        checkOutDate: formatDate(
-                                                            checkOutDate,
-                                                            "yyyy-mm-dd"
-                                                        ),
-                                                        roomType2,
-                                                        roomType4,
-                                                        rooms,
-                                                        sumPrice,
-                                                        type2Price,
-                                                        type4Price,
-                                                        userId,
-                                                        numberOfRoom2,
-                                                        numberOfRoom4,
-                                                    },
-                                                });
-                                            }}
-                                        >
-                                            <span className="reserve-page__change">
-                                                {t("reserve.changeYourChoice")}
-                                            </span>
-                                        </a>
-                                    </div>
+                                    <HotelInfo
+                                        hotelDetail={hotelDetail}
+                                        bookingInfo={bookingInfo}
+                                        checkInDate={checkInDate}
+                                        checkOutDate={checkOutDate}
+                                        roomType2={roomType2}
+                                        roomType4={roomType4}
+                                        rooms={rooms}
+                                        sumPrice={sumPrice}
+                                        type2Price={type2Price}
+                                        type4Price={type4Price}
+                                        userId={userId}
+                                        numberOfRoom2={numberOfRoom2}
+                                        numberOfRoom4={numberOfRoom4}
+                                        tempInfo={tempInfo}
+                                        hotelId={hotelId}
+                                        icons={icons}
+                                        navigate={navigate}
+                                        t={t}
+                                    />
                                 </div>
 
                                 <div className="col">
-                                    <div className="reserve-container">
-                                        <h3>{t("reserve.summaryHeader")}</h3>
-
-                                        <div className="separate mx-0 my-3"></div>
-
-                                        <div className="d-flex justify-content-between">
-                                            <span>{t("reserve.originalPrice")}</span>
-                                            <span className="ms-3">
-                                                {bookingInfo?.sumPrice?.toLocaleString() ||
-                                                    sumPrice?.toLocaleString()}{" "}
-                                                VND
-                                            </span>
-                                        </div>
-
-                                        <div className="d-flex justify-content-between">
-                                            <span>{t("reserve.discount")}</span>
-                                            <span className="ms-3">0 VND</span>
-                                        </div>
-
-                                        <div className="d-flex justify-content-between mt-5 fs-4  fw-bold">
-                                            <span>{t("reserve.totalPrice")}</span>
-                                            <span className="ms-3">
-                                                {bookingInfo?.sumPrice?.toLocaleString() ||
-                                                    sumPrice?.toLocaleString()}{" "}
-                                                VND
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <PriceSummary
+                                        sumPrice={sumPrice}
+                                        bookingInfo={bookingInfo}
+                                        t={t}
+                                    />
                                 </div>
                             </div>
                         </div>

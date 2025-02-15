@@ -15,10 +15,11 @@ import {
     Spin,
 } from "antd";
 import { TagOutlined, CloseOutlined, SearchOutlined, GiftOutlined } from "@ant-design/icons";
+import { applyDiscount } from "../../services/apiService";
 
 const { Text } = Typography;
 
-const CouponSelector = ({ onApplyCoupon, totalAmount }) => {
+const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
     const [selectedCoupon, setSelectedCoupon] = useState(null);
     const [couponCode, setCouponCode] = useState("");
     const [error, setError] = useState("");
@@ -37,12 +38,11 @@ const CouponSelector = ({ onApplyCoupon, totalAmount }) => {
     const fetchCoupons = async () => {
         setIsLoadingCoupons(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
             const mockData = [
                 {
                     code: "WELCOME10",
                     discount: 10,
-                    type: "percent",
+                    type: "percentage",
                     minAmount: 100000,
                     description: "Giảm 10% cho đơn hàng từ 100,000đ",
                     expiryDate: "2025-03-31",
@@ -58,7 +58,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount }) => {
                     category: "Khuyến mãi tháng",
                 },
             ];
-            setAvailableCoupons(mockData);
+            setAvailableCoupons(discountList.length > 0 ? discountList : mockData);
         } catch (error) {
             console.error("Error fetching coupons:", error);
         } finally {
@@ -121,7 +121,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount }) => {
     };
 
     const calculateDiscount = (coupon) => {
-        if (coupon.type === "percent") {
+        if (coupon.type === "percentage") {
             return (totalAmount * coupon.discount) / 100;
         }
         return coupon.discount;
@@ -132,7 +132,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount }) => {
         setError("");
 
         try {
-            await new Promise((resolve) => setTimeout(resolve, 800));
+            const res = await applyDiscount(tempSelectedCoupon.code, totalAmount);
 
             const coupon =
                 tempSelectedCoupon ||
@@ -237,11 +237,13 @@ const CouponSelector = ({ onApplyCoupon, totalAmount }) => {
                                             <Space>
                                                 <Text strong>{coupon.code}</Text>
                                                 <Tag color="green">
-                                                    {coupon.type === "percent"
+                                                    {coupon.type === "percentage"
                                                         ? `Giảm ${coupon.discount}%`
                                                         : `Giảm ${coupon.discount.toLocaleString()}đ`}
                                                 </Tag>
-                                                <Tag color="purple">{coupon.category}</Tag>
+                                                {coupon.category && (
+                                                    <Tag color="purple">{coupon.category}</Tag>
+                                                )}
                                             </Space>
                                         }
                                         description={
@@ -348,11 +350,13 @@ const CouponSelector = ({ onApplyCoupon, totalAmount }) => {
                                 <Space>
                                     <Text strong>{tempSelectedCoupon.code}</Text>
                                     <Tag color="green">
-                                        {tempSelectedCoupon.type === "percent"
+                                        {tempSelectedCoupon.type === "percentage"
                                             ? `Giảm ${tempSelectedCoupon.discount}%`
                                             : `Giảm ${tempSelectedCoupon.discount.toLocaleString()}đ`}
                                     </Tag>
-                                    <Tag color="purple">{tempSelectedCoupon.category}</Tag>
+                                    {tempSelectedCoupon.category && (
+                                        <Tag color="purple">{tempSelectedCoupon.category}</Tag>
+                                    )}
                                 </Space>
                                 <Text type="secondary">{tempSelectedCoupon.description}</Text>
                             </Space>
@@ -396,11 +400,13 @@ const CouponSelector = ({ onApplyCoupon, totalAmount }) => {
                             <Space>
                                 <Text strong>{selectedCoupon.code}</Text>
                                 <Tag color="green">
-                                    {selectedCoupon.type === "percent"
+                                    {selectedCoupon.type === "percentage"
                                         ? `Giảm ${selectedCoupon.discount}%`
                                         : `Giảm ${selectedCoupon.discount.toLocaleString()}đ`}
                                 </Tag>
-                                <Tag color="purple">{selectedCoupon.category}</Tag>
+                                {selectedCoupon.category && (
+                                    <Tag color="purple">{selectedCoupon.category}</Tag>
+                                )}
                             </Space>
                             <Text type="secondary">{selectedCoupon.description}</Text>
                         </Space>

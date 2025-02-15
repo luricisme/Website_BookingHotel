@@ -173,17 +173,21 @@ const HotelDetails = () => {
                 const response = await axios.get(
                     `/hotels/${id}?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&roomType2=${roomType2}&roomType4=${roomType4}`
                 );
+
                 const data = response;
+
+                console.log(">>> Hotel details: ", data);
+
                 if (data.status_code === 200) {
                     const room1 = data.data.room_types[0];
                     const room2 = data.data.room_types[1];
 
-                    setRoomPrice1(room1.price);
-                    setRoomPrice2(room2.price);
+                    setRoomPrice1(room1?.price || 0);
+                    setRoomPrice2(room2?.price || 0);
 
                     const isWeekendDay = checkWeekend(checkInDate) || checkWeekend(checkOutDate);
-                    const initialPrice1 = isWeekendDay ? room1.weekend_price : room1.price;
-                    const initialPrice2 = isWeekendDay ? room2.weekend_price : room2.price;
+                    const initialPrice1 = isWeekendDay ? room1.weekend_price : room1?.price || 0;
+                    const initialPrice2 = isWeekendDay ? room2.weekend_price : room2?.price || 0;
 
                     if (currency === "VND") {
                         setRoomPrice1Now(initialPrice1);
@@ -195,7 +199,7 @@ const HotelDetails = () => {
 
                     setRoomCounts({
                         [room1.id]: roomType2 || 1,
-                        [room2.id]: roomType4 || 1,
+                        [room2?.id]: roomType4 || 1,
                     });
 
                     setMaxRoom2(data.data.numberOfRoom2);
@@ -228,7 +232,7 @@ const HotelDetails = () => {
 
         fetchReviews();
         fetchHotelDetails();
-    }, [id, location.state]);
+    }, [convertPrice, currency, id, location.state]);
 
     if (!isLoaded)
         return (

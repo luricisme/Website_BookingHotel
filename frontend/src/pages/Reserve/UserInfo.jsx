@@ -19,6 +19,7 @@ const UserInfo = ({ formik }) => {
                                 name="name"
                                 value={formik.values.name}
                                 onChange={formik.handleChange}
+                                disabled
                                 className={`form-control form-control-lg fs-4  ${
                                     formik.errors.name && formik.touched.name ? "is-invalid" : ""
                                 }`}
@@ -38,6 +39,7 @@ const UserInfo = ({ formik }) => {
                                 name="cccd"
                                 value={formik.values.cccd}
                                 onChange={formik.handleChange}
+                                disabled
                                 className={`form-control form-control-lg fs-4  ${
                                     formik.errors.cccd && formik.touched.cccd ? "is-invalid" : ""
                                 }`}
@@ -58,6 +60,7 @@ const UserInfo = ({ formik }) => {
                         name="email"
                         value={formik.values.email}
                         onChange={formik.handleChange}
+                        disabled
                         className={`form-control form-control-lg fs-4  ${
                             formik.errors.email && formik.touched.email ? "is-invalid" : ""
                         }`}
@@ -77,6 +80,7 @@ const UserInfo = ({ formik }) => {
                                 type="text"
                                 name="phone"
                                 value={formik.values.phone}
+                                disabled
                                 onChange={formik.handleChange}
                                 className={`form-control form-control-lg fs-4  ${
                                     formik.errors.phone && formik.touched.phone ? "is-invalid" : ""

@@ -64,15 +64,45 @@ const Reserve = () => {
 
     const [hotelDetail, setHotelDetail] = useState(null);
     const [bookingInfo, setBookingInfo] = useState(null);
+    const [discountList, setDiscountList] = useState([]);
 
     useEffect(() => {
         const fetchBookingInfo = async () => {
             try {
                 const response = await getBookingInfo();
-                console.log(">>> response", response);
 
                 if (response) {
+                    console.log(">>> booking info", response.data);
+
                     setBookingInfo(response.data);
+
+                    const discount = response.data.discount.map((item) => {
+                        let description = item.description
+                            ? item.description
+                            : item.discount_type === "percentage"
+                            ? `Giảm ${item.discount_value.toLocaleString()}% ${
+                                  item.minAmount
+                                      ? `cho đơn từ ${item.minAmount.toLocaleString()} VND`
+                                      : ""
+                              }`
+                            : `Giảm ${item.discount_value.toLocaleString()} VND ${
+                                  item.minAmount
+                                      ? `cho đơn từ ${item.minAmount.toLocaleString()} VND`
+                                      : ""
+                              }`;
+
+                        return {
+                            ...item,
+                            minAmount: item.min_amount || 0,
+                            description: description || "",
+                            code: item.discount_code || "",
+                            discount: item.discount_value || 0,
+                            type: item.discount_type || "",
+                            expiryDate: item.expiry_date || item.discount_end_at || "",
+                        };
+                    });
+
+                    setDiscountList(discount);
                 }
             } catch (error) {
                 toast.error("Failed to get booking information");
@@ -81,6 +111,7 @@ const Reserve = () => {
         // if (location.state && location.state.isReturn) {
         fetchBookingInfo();
         // }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [JSON.stringify(location.state)]);
 
     const searchParams = new URLSearchParams(location.search);
@@ -494,6 +525,7 @@ const Reserve = () => {
                                 <div className="col">
                                     <div className="reserve-container">
                                         <CouponSelector
+                                            discountList={discountList}
                                             onApplyCoupon={handleApplyCoupon}
                                             totalAmount={sumPrice}
                                         />

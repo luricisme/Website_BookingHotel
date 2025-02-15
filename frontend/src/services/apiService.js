@@ -133,9 +133,10 @@ const getBookingInfo = async () => {
     return await axios.get("/booking/information");
 };
 
-const postBookingInfo = async (note) => {
+const postBookingInfo = async (note, totalPrice = 0) => {
     return await axios.post("/booking/information", {
         note,
+        totalPrice,
     });
 };
 
@@ -146,6 +147,13 @@ const checkTimeBooking = async () => {
 const paymentBooking = async (data) => {
     return await axios.post("/booking/finish", {
         paymentMethod: data,
+    });
+};
+
+const applyDiscount = async (id_discount, oldSumPrice) => {
+    return await axios.post(`/booking/apply-discount`, {
+        id_discount,
+        oldSumPrice,
     });
 };
 
@@ -337,4 +345,5 @@ export {
     updateDiscountStatus,
     sendResetCode,
     resetPassword,
+    applyDiscount,
 };

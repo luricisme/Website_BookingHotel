@@ -166,6 +166,9 @@ const Room = () => {
             dataIndex: "roomPrice",
             key: "roomPrice",
             // sorter: true,
+            render: (text) => {
+                return `${Number(text).toLocaleString()}`;
+            },
         },
         {
             title: "Status",

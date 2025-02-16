@@ -68,6 +68,13 @@ const Discount = () => {
             dataIndex: "value",
             key: "value",
             width: 100,
+            render: (value, record) => {
+                if (record.type === "percentage") {
+                    return `${value}%`;
+                } else {
+                    return `${value.toLocaleString()}`;
+                }
+            },
         },
         {
             title: "Type",

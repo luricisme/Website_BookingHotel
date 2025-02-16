@@ -33,6 +33,7 @@ import { RolesGuard } from './auth/guard/role.guard';
 import { DiscountModule } from './module/discount/discount.module';
 import { RedisModule } from './redis/redis.module';
 import { VisitCounterMiddleware } from './middleware/visit_counter.middleware';
+import { VisitModule } from './module/visit/visit.module';
 
 @Module({
   imports: [
@@ -106,7 +107,8 @@ import { VisitCounterMiddleware } from './middleware/visit_counter.middleware';
     BookingRoomModule,
     DiscountModule,
     ScheduleModule.forRoot(),
-    RedisModule
+    RedisModule,
+    VisitModule
   ],
   controllers: [AppController],
   providers: [

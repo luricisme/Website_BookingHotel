@@ -12,8 +12,8 @@ export class VisitCounterMiddleware implements NestMiddleware {
             // Chỉ đếm khi vào trang chủ
             const key = 'visit_count';
             const visits = (await this.redisService.get(key)) || 0;
-            await this.redisService.set(key, visits + 1, 86400); // 🕒 Dữ liệu sẽ hết hạn sau 1 ngày (24 giờ)
-            console.log(`Số lượt truy cập: ${visits + 1}`);
+            await this.redisService.set(key, visits + 1); // 🕒 Dữ liệu sẽ hết hạn sau 1 ngày (24 giờ)
+            console.log(`Visit count: ${visits + 1}`);
         }
         next();
     }

@@ -26,7 +26,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 import axios from "~/utils/axiosCustomize";
-import { Spin } from "antd";
+import { Button, Spin } from "antd";
 
 const HotelDetails = () => {
     const { t } = useTranslation();
@@ -35,10 +35,13 @@ const HotelDetails = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const [loading, setLoading] = useState(false);
+
     const { checkInDate, checkOutDate, numOfPeople } = location.state || {};
     const [isFavorite, setIsFavorite] = useState(isFav);
-    console.log("check in: ", checkInDate);
-    console.log("isFavorite: ", isFav);
+
+    console.log(">>> Location state: ", location.state);
+
     const mapPositionRef = useRef([10.5279716, 107.3921728]);
     const [showMapModal, setShowMapModal] = useState(true);
 
@@ -84,8 +87,8 @@ const HotelDetails = () => {
             const response = await getHotelDetail(id, {
                 checkInDate: startDate,
                 checkOutDate: endDate,
-                roomType2: numOfPeople.roomType2 || 1,
-                roomType4: numOfPeople.roomType4 || 1,
+                roomType2: numOfPeople.roomType2 ?? 0,
+                roomType4: numOfPeople.roomType4 ?? 0,
             });
 
             console.log(">>> Hotel detail: ", response.data);
@@ -197,9 +200,20 @@ const HotelDetails = () => {
                         setRoomPrice2Now(convertPrice(initialPrice2, "VND", currency));
                     }
 
+                    // setRoomCounts({
+                    //     [room1.id]: roomType2 || 1,
+                    //     [room2?.id]: roomType4 || 1,
+                    // });
+
                     setRoomCounts({
-                        [room1.id]: roomType2 || 1,
-                        [room2?.id]: roomType4 || 1,
+                        [room1.id]:
+                            data.data.numberOfRoom2 >= roomType2
+                                ? roomType2
+                                : data.data.numberOfRoom2 ?? 1,
+                        [room2?.id]:
+                            data.data.numberOfRoom4 >= roomType4
+                                ? roomType4
+                                : data.data.numberOfRoom4 ?? 1,
                     });
 
                     setMaxRoom2(data.data.numberOfRoom2);
@@ -266,9 +280,9 @@ const HotelDetails = () => {
         }
 
         const numberOfRoom2 =
-            roomCounts[hotelDetails.room_types.find((room) => room.type === 2).id] || 0;
+            roomCounts[hotelDetails.room_types.find((room) => room.type === 2)?.id] || 0;
         const numberOfRoom4 =
-            roomCounts[hotelDetails.room_types.find((room) => room.type === 4).id] || 0;
+            roomCounts[hotelDetails.room_types.find((room) => room.type === 4)?.id] || 0;
 
         const data = {
             hotelId: +id,
@@ -290,6 +304,7 @@ const HotelDetails = () => {
         console.log(">>> Start booking data: ", data);
 
         try {
+            setLoading(true);
             const res = await startBooking(data);
             console.log(">>> Start booking response: ", res);
 
@@ -308,6 +323,8 @@ const HotelDetails = () => {
         } catch (error) {
             console.error(">>> Error: ", error);
             toast.error("Error while starting booking");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -555,9 +572,14 @@ const HotelDetails = () => {
                                             }, 0)
                                             .toLocaleString()}
                                     </p>
-                                    <button
-                                        className="btn btn-success"
-                                        style={{ fontSize: "20px", padding: "5px 15px" }}
+                                    <Button
+                                        type="primary"
+                                        loading={loading} // Thêm prop loading nếu bạn cần
+                                        style={{
+                                            fontSize: "20px",
+                                            padding: "5px 15px",
+                                            height: "auto", // Để button co giãn theo nội dung
+                                        }}
                                         onClick={() => handleReserve()}
                                         disabled={
                                             Object.values(roomCounts).reduce(
@@ -567,7 +589,7 @@ const HotelDetails = () => {
                                         }
                                     >
                                         {t("hotelDetail.reserve")}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>

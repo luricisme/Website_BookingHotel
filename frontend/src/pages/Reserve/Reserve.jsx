@@ -65,6 +65,10 @@ const Reserve = () => {
     const [hotelDetail, setHotelDetail] = useState(null);
     const [bookingInfo, setBookingInfo] = useState(null);
     const [discountList, setDiscountList] = useState([]);
+    const [summaryInfo, setSummaryInfo] = useState({
+        totalPrice: 0,
+        discountAmount: 0,
+    });
 
     useEffect(() => {
         const fetchBookingInfo = async () => {
@@ -93,6 +97,7 @@ const Reserve = () => {
 
                         return {
                             ...item,
+                            id: item.discount_id,
                             minAmount: item.min_amount || 0,
                             description: description || "",
                             code: item.discount_code || "",
@@ -321,6 +326,7 @@ const Reserve = () => {
 
     const [currentStep, setCurrentStep] = useState(2);
     const [isComplete, setIsComplete] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleNext = async () => {
         if (currentStep === 2) {
@@ -346,11 +352,17 @@ const Reserve = () => {
             }
 
             try {
-                const res = await postBookingInfo(formik.values.specialRequest);
+                setLoading(true);
+                const res = await postBookingInfo(
+                    formik.values.specialRequest,
+                    summaryInfo?.totalPrice || sumPrice || 0
+                );
                 console.log(">>> res", res);
             } catch (error) {
                 console.log(">>> error", error);
                 toast.error("Failed to post booking info");
+            } finally {
+                setLoading(false);
             }
 
             return;
@@ -359,6 +371,7 @@ const Reserve = () => {
         // finish
         if (currentStep === stepsConfig.length) {
             try {
+                setLoading(true);
                 const res = await paymentBooking(paymentMethod);
 
                 console.log(">>> res", res);
@@ -376,6 +389,8 @@ const Reserve = () => {
             } catch (error) {
                 console.log(">>> error", error);
                 toast.error("Failed to payment booking");
+            } finally {
+                setLoading(false);
             }
 
             // setIsComplete(true);
@@ -483,15 +498,22 @@ const Reserve = () => {
                                     </button>
 
                                     {!isComplete && (
-                                        <button
-                                            className="btn btn-success btn-lg fs-3 px-4"
-                                            style={{ background: "#227B94" }}
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            loading={loading}
+                                            style={{
+                                                background: "#227B94",
+                                                height: "auto", // Để button có thể co giãn theo nội dung
+                                                fontSize: "1.5rem", // tương đương fs-3
+                                                padding: "0.5rem 1.5rem", // tương đương px-4
+                                            }}
                                             onClick={() => handleNext()}
                                         >
                                             {currentStep === stepsConfig.length
                                                 ? t("reserve.finish")
                                                 : t("reserve.next")}
-                                        </button>
+                                        </Button>
                                     )}
                                 </div>
                             </div>
@@ -525,6 +547,7 @@ const Reserve = () => {
                                 <div className="col">
                                     <div className="reserve-container">
                                         <CouponSelector
+                                            setSummaryInfo={setSummaryInfo}
                                             discountList={discountList}
                                             onApplyCoupon={handleApplyCoupon}
                                             totalAmount={sumPrice}
@@ -536,6 +559,7 @@ const Reserve = () => {
                                     <PriceSummary
                                         sumPrice={sumPrice}
                                         bookingInfo={bookingInfo}
+                                        summaryInfo={summaryInfo}
                                         t={t}
                                     />
                                 </div>

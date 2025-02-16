@@ -19,7 +19,7 @@ import { applyDiscount } from "../../services/apiService";
 
 const { Text } = Typography;
 
-const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
+const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [], setSummaryInfo }) => {
     const [selectedCoupon, setSelectedCoupon] = useState(null);
     const [couponCode, setCouponCode] = useState("");
     const [error, setError] = useState("");
@@ -38,27 +38,29 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
     const fetchCoupons = async () => {
         setIsLoadingCoupons(true);
         try {
-            const mockData = [
-                {
-                    code: "WELCOME10",
-                    discount: 10,
-                    type: "percentage",
-                    minAmount: 100000,
-                    description: "Giảm 10% cho đơn hàng từ 100,000đ",
-                    expiryDate: "2025-03-31",
-                    category: "Chào mừng",
-                },
-                {
-                    code: "FIXED50K",
-                    discount: 50000,
-                    type: "fixed",
-                    minAmount: 200000,
-                    description: "Giảm 50,000đ cho đơn hàng từ 200,000đ",
-                    expiryDate: "2025-03-31",
-                    category: "Khuyến mãi tháng",
-                },
-            ];
-            setAvailableCoupons(discountList.length > 0 ? discountList : mockData);
+            // const mockData = [
+            //     {
+            //         id: 1,
+            //         code: "WELCOME10",
+            //         discount: 10,
+            //         type: "percentage",
+            //         minAmount: 100000,
+            //         description: "10% off for orders from $100,000",
+            //         expiryDate: "2025-03-31",
+            //         category: "Welcome",
+            //     },
+            //     {
+            //         id: 2,
+            //         code: "FIXED50K",
+            //         discount: 50000,
+            //         type: "fixed",
+            //         minAmount: 200000,
+            //         description: "$50,000 off for orders from $200,000",
+            //         expiryDate: "2025-03-31",
+            //         category: "Monthly Promotion",
+            //     },
+            // ];
+            setAvailableCoupons(discountList.length > 0 ? discountList : []);
         } catch (error) {
             console.error("Error fetching coupons:", error);
         } finally {
@@ -68,6 +70,8 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
 
     useEffect(() => {
         if (isModalOpen) {
+            setTempSelectedCoupon(null);
+            setCouponCode("");
             fetchCoupons();
         }
     }, [isModalOpen]);
@@ -102,7 +106,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
             (coupon) =>
                 coupon.code.toLowerCase().includes(searchValue) ||
                 coupon.description.toLowerCase().includes(searchValue) ||
-                coupon.category.toLowerCase().includes(searchValue)
+                coupon?.category?.toLowerCase()?.includes(searchValue)
         );
     };
 
@@ -115,7 +119,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
 
     const validateCoupon = (coupon) => {
         if (totalAmount < coupon.minAmount) {
-            return `Đơn hàng tối thiểu ${coupon.minAmount.toLocaleString()}đ để áp dụng mã`;
+            return `Minimum order of $${coupon.minAmount.toLocaleString()} required to apply this code`;
         }
         return null;
     };
@@ -132,14 +136,12 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
         setError("");
 
         try {
-            const res = await applyDiscount(tempSelectedCoupon.code, totalAmount);
-
             const coupon =
                 tempSelectedCoupon ||
                 availableCoupons.find((c) => c.code === couponCode.toUpperCase());
 
             if (!coupon) {
-                setError("Mã giảm giá không hợp lệ");
+                setError("Invalid discount code");
                 return;
             }
 
@@ -149,11 +151,28 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                 return;
             }
 
-            setSelectedCoupon(coupon);
             const discountAmount = calculateDiscount(coupon);
-            onApplyCoupon(coupon, discountAmount);
+
+            const res = await applyDiscount(coupon.id, totalAmount);
+
+            if (res.discountAmount && totalAmount) {
+                setSummaryInfo({
+                    discountAmount: res.discountAmount,
+                    totalPrice: res.totalPrice,
+                });
+
+                setSelectedCoupon(coupon);
+                setError("");
+                setCouponCode("");
+                setTempSelectedCoupon(null);
+                setIsModalOpen(false);
+
+                onApplyCoupon(coupon, discountAmount);
+            } else {
+                setError("Error applying discount code");
+            }
         } catch (error) {
-            setError("Có lỗi xảy ra khi áp dụng mã giảm giá");
+            setError("Error applying discount code");
             console.error("Error applying coupon:", error);
         } finally {
             setIsApplyingCoupon(false);
@@ -164,6 +183,10 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
         setIsRemovingCoupon(true);
         try {
             await new Promise((resolve) => setTimeout(resolve, 500));
+            setSummaryInfo({
+                discountAmount: 0,
+                totalPrice: totalAmount,
+            });
             setSelectedCoupon(null);
             setTempSelectedCoupon(null);
             setCouponCode("");
@@ -177,6 +200,10 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
     };
 
     const handleClearTempCoupon = () => {
+        setSummaryInfo({
+            discountAmount: 0,
+            totalPrice: totalAmount,
+        });
         setTempSelectedCoupon(null);
         setCouponCode("");
     };
@@ -195,24 +222,28 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
             title={
                 <Space>
                     <GiftOutlined />
-                    <span>Chọn mã giảm giá</span>
+                    <span>Select Discount Code</span>
                 </Space>
             }
             open={isModalOpen}
-            onCancel={handleCloseModal}
+            onCancel={() => {
+                handleCloseModal();
+                setTempSelectedCoupon(null);
+                setCouponCode("");
+            }}
             footer={null}
             width={600}
         >
             <Space.Compact style={{ width: "100%", marginBottom: 16 }}>
                 <Input
                     ref={searchInputRef}
-                    placeholder="Tìm kiếm mã giảm giá..."
+                    placeholder="Search discount codes..."
                     onPressEnter={handleSearch}
                     style={{ width: "calc(100% - 90px)" }}
                 />
                 <Button icon={<CloseOutlined />} onClick={handleClearSearch} />
                 <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-                    Tìm
+                    Search
                 </Button>
             </Space.Compact>
 
@@ -227,8 +258,11 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                                     className={`cursor-pointer hover:bg-gray-50 ${
                                         tempSelectedCoupon?.code === coupon.code ? "bg-blue-50" : ""
                                     }`}
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setSelectedCoupon(null);
                                         setTempSelectedCoupon(coupon);
+                                        setError("");
                                         handleCloseModal();
                                     }}
                                 >
@@ -238,8 +272,8 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                                                 <Text strong>{coupon.code}</Text>
                                                 <Tag color="green">
                                                     {coupon.type === "percentage"
-                                                        ? `Giảm ${coupon.discount}%`
-                                                        : `Giảm ${coupon.discount.toLocaleString()}đ`}
+                                                        ? `${coupon.discount}% Off`
+                                                        : `$${coupon.discount.toLocaleString()} Off`}
                                                 </Tag>
                                                 {coupon.category && (
                                                     <Tag color="purple">{coupon.category}</Tag>
@@ -251,14 +285,14 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                                                 <Text>{coupon.description}</Text>
                                                 <br />
                                                 <Text type="secondary">
-                                                    Đơn tối thiểu:{" "}
-                                                    {coupon.minAmount.toLocaleString()}đ
+                                                    Minimum order: $
+                                                    {coupon.minAmount.toLocaleString()}
                                                 </Text>
                                             </>
                                         }
                                     />
                                     <Tag color="blue">
-                                        HSD: {new Date(coupon.expiryDate).toLocaleDateString()}
+                                        Expires: {new Date(coupon.expiryDate).toLocaleDateString()}
                                     </Tag>
                                 </List.Item>
                             )}
@@ -274,19 +308,19 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                         </div>
                     </>
                 ) : (
-                    <Empty description="Không tìm thấy mã giảm giá" />
+                    <Empty description="No discount codes found" />
                 )}
             </Spin>
         </Modal>
     );
 
     return (
-        <Card title="Mã giảm giá" style={{ width: "100%", maxWidth: 500 }}>
+        <Card title="Discount Code" style={{ width: "100%", maxWidth: 500 }}>
             {!selectedCoupon ? (
                 <>
                     <Space.Compact style={{ width: "100%" }}>
                         <Input
-                            placeholder="Nhập mã giảm giá"
+                            placeholder="Enter discount code"
                             value={couponCode}
                             onChange={(e) => {
                                 setCouponCode(e.target.value);
@@ -301,7 +335,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                             onClick={handleApplyCoupon}
                             loading={isApplyingCoupon}
                         >
-                            Áp dụng
+                            Apply
                         </Button>
                     </Space.Compact>
 
@@ -312,7 +346,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                             onClick={() => setIsModalOpen(true)}
                             disabled={isApplyingCoupon}
                         >
-                            Chọn mã giảm giá
+                            Select Discount Code
                         </Button>
                         {(couponCode || tempSelectedCoupon) && (
                             <Button
@@ -321,7 +355,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                                 onClick={handleClearTempCoupon}
                                 disabled={isApplyingCoupon}
                             >
-                                Xóa
+                                Remove
                             </Button>
                         )}
                     </Space>
@@ -342,7 +376,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                                     onClick={handleClearTempCoupon}
                                     disabled={isApplyingCoupon}
                                 >
-                                    Xóa
+                                    Remove
                                 </Button>
                             }
                         >
@@ -351,8 +385,8 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                                     <Text strong>{tempSelectedCoupon.code}</Text>
                                     <Tag color="green">
                                         {tempSelectedCoupon.type === "percentage"
-                                            ? `Giảm ${tempSelectedCoupon.discount}%`
-                                            : `Giảm ${tempSelectedCoupon.discount.toLocaleString()}đ`}
+                                            ? `${tempSelectedCoupon.discount}% Off`
+                                            : `$${tempSelectedCoupon.discount.toLocaleString()} Off`}
                                     </Tag>
                                     {tempSelectedCoupon.category && (
                                         <Tag color="purple">{tempSelectedCoupon.category}</Tag>
@@ -371,17 +405,19 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                             <Space>
                                 <Button
                                     type="text"
-                                    onClick={() => setIsModalOpen(true)}
+                                    onClick={() => {
+                                        setIsModalOpen(true);
+                                    }}
                                     disabled={isRemovingCoupon}
                                 >
-                                    Thay đổi
+                                    Change
                                 </Button>
                                 <Popconfirm
-                                    title="Xóa mã giảm giá"
-                                    description="Bạn có chắc chắn muốn xóa mã giảm giá này?"
+                                    title="Remove Discount Code"
+                                    description="Are you sure you want to remove this discount code?"
                                     onConfirm={handleRemoveCoupon}
-                                    okText="Xóa"
-                                    cancelText="Hủy"
+                                    okText="Remove"
+                                    cancelText="Cancel"
                                     disabled={isRemovingCoupon}
                                 >
                                     <Button
@@ -390,7 +426,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                                         icon={<CloseOutlined />}
                                         loading={isRemovingCoupon}
                                     >
-                                        Xóa
+                                        Remove
                                     </Button>
                                 </Popconfirm>
                             </Space>
@@ -401,8 +437,8 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                                 <Text strong>{selectedCoupon.code}</Text>
                                 <Tag color="green">
                                     {selectedCoupon.type === "percentage"
-                                        ? `Giảm ${selectedCoupon.discount}%`
-                                        : `Giảm ${selectedCoupon.discount.toLocaleString()}đ`}
+                                        ? `${selectedCoupon.discount}% Off`
+                                        : `$${selectedCoupon.discount.toLocaleString()} Off`}
                                 </Tag>
                                 {selectedCoupon.category && (
                                     <Tag color="purple">{selectedCoupon.category}</Tag>
@@ -412,7 +448,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [] }) => {
                         </Space>
                     </Card>
                     <Alert
-                        message="Đã áp dụng mã giảm giá thành công!"
+                        message="Discount code applied successfully!"
                         type="success"
                         showIcon
                         style={{ marginTop: 16 }}

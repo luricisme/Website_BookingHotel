@@ -84,14 +84,14 @@ const Reserve = () => {
                         let description = item.description
                             ? item.description
                             : item.discount_type === "percentage"
-                            ? `Giảm ${item.discount_value.toLocaleString()}% ${
+                            ? `${item.discount_value.toLocaleString()}% off ${
                                   item.minAmount
-                                      ? `cho đơn từ ${item.minAmount.toLocaleString()} VND`
+                                      ? `for orders from ${item.minAmount.toLocaleString()} VND`
                                       : ""
                               }`
-                            : `Giảm ${item.discount_value.toLocaleString()} VND ${
+                            : `${item.discount_value.toLocaleString()} VND off ${
                                   item.minAmount
-                                      ? `cho đơn từ ${item.minAmount.toLocaleString()} VND`
+                                      ? `for orders from ${item.minAmount.toLocaleString()} VND`
                                       : ""
                               }`;
 

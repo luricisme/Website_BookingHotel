@@ -29,7 +29,7 @@ const OrderDetail = () => {
             const response = await axios.get(
                 `/booking/guest/detail?userId=${userId}&bookingId=${reservationID}&page=${tableParams?.pagination?.current}&per_page=${tableParams?.pagination?.pageSize}`
             );
-            const data = await response.json();
+            const data = response;
             if (data.status_code === 200) {
                 setOrderData(data.data); // Cập nhật dữ liệu đặt phòng
 

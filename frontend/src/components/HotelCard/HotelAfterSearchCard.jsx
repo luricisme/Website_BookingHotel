@@ -48,6 +48,10 @@ const HotelAfterSearchCard = ({
                 checkOutDate: location.state?.endDate,
                 roomType2: location.state?.numOfPeople?.roomType2,
                 roomType4: location.state?.numOfPeople?.roomType4,
+                numOfPeople: {
+                    roomType2: location.state?.numOfPeople?.roomType2 ?? 0,
+                    roomType4: location.state?.numOfPeople?.roomType4 ?? 0,
+                },
             },
         });
     };
@@ -183,7 +187,12 @@ const HotelAfterSearchCard = ({
                 </button>
             </div>
             <div className="hotel-card__info flex-grow-1 mt-0 d-flex flex-column">
-                <a title={name} className="hotel-card__name fs-1" onClick={() => handleBookNow()} style={{ fontSize: "20px", cursor: "pointer" }}>
+                <a
+                    title={name}
+                    className="hotel-card__name fs-1"
+                    onClick={() => handleBookNow()}
+                    style={{ fontSize: "20px", cursor: "pointer" }}
+                >
                     {name}
                 </a>
                 <div className="hotel-card__star d-flex gap-2">

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, InputNumber, DatePicker, Select, Button, message } from "antd";
+import { Modal, Form, InputNumber, DatePicker, Select, Button, message } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 import moment from "moment";
+import { updateDiscount } from "../../../services/apiService";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -59,8 +60,9 @@ const EditDiscount = ({ record, onSuccess }) => {
             delete formData.dateRange;
 
             // Call API to update discount
-            // const response = await updateDiscount(formData);
-            console.log("Update form:", formData);
+            const { id: discountId, ...updateData } = formData;
+            const response = await updateDiscount(discountId, updateData);
+            console.log("Update form:", response);
 
             message.success("Discount updated successfully");
             setIsModalOpen(false);
@@ -97,17 +99,16 @@ const EditDiscount = ({ record, onSuccess }) => {
                 width={600}
             >
                 <Form form={form} layout="vertical" onFinish={onFinish}>
-                    <Form.Item
+                    {/* <Form.Item
                         name="code"
                         label="Discount Code"
                         rules={[
-                            { required: true, message: "Please input discount code!" },
                             { min: 3, message: "Code must be at least 3 characters!" },
                             { max: 20, message: "Code cannot be longer than 20 characters!" },
                         ]}
                     >
                         <Input placeholder="Enter discount code (e.g., SUMMER2024)" />
-                    </Form.Item>
+                    </Form.Item> */}
 
                     <Form.Item
                         name="type"

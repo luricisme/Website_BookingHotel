@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 0;
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background-color: #0073e6;
+      color: #ffffff;
+      text-align: center;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .greeting {
+      font-size: 16px;
+      color: #555;
+      margin: 20px;
+    }
+
+    .details {
+      background-color: #f9f9f9;
+      padding: 20px;
+      margin: 20px;
+      border-radius: 8px;
+    }
+
+    .details p {
+      margin: 10px 0;
+      font-size: 14px;
+      color: #444;
+    }
+
+    .details strong {
+      color: #333;
+      font-weight: bold;
+    }
+
+    .highlight {
+      color: #e67e22;
+      font-weight: bold;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 14px;
+      color: #777;
+      margin: 20px;
+    }
+
+    .footer p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">Thank you for booking with BookAstay!</div>
+    <p class="greeting">Hello {{email}},</p>
+    <p style="margin: 20px;">Your booking has been confirmed. We are excited to host you!</p>
+
+    <div class="details">
+      <p><strong>Booking Details:</strong></p>
+      <p><strong>Hotel:</strong> <span class="highlight">{{bookingData.hotelName}}</span></p>
+      <p><strong>Check-in Date:</strong> <span class="highlight">{{bookingData.checkInDate}}</span></p>
+      <p><strong>Check-out Date:</strong> <span class="highlight">{{bookingData.checkOutDate}}</span></p>
+      <p><strong>Total Price:</strong> <span class="highlight">{{discount.totalPrice}} VND</span></p>
+      <p><strong>Note:</strong> {{note}}</p>
+      <p><strong>Payment Method:</strong> <span class="highlight">{{paymentMethod}}</span></p>
+    </div>
+
+    <p style="margin: 20px;">We wish you a wonderful stay and look forward to serving you!</p>
+    <div class="footer">
+      <p>Best regards,</p>
+      <p><strong>The BookAstay Team</strong></p>
+      <p>Contact us: support@bookastay.com</p>
+    </div>
+  </div>
+</body>
+
+</html>

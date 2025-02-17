@@ -22,6 +22,8 @@ import { DetailHotelDto } from "./dto/detail-hotel.dto";
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { memoryStorage } from "multer";
 import { Roles } from "@/helpers/decorator/roles";
+import { ResponseDto } from "@/helpers/utils";
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity } from "@nestjs/swagger";
 
 @Controller("hotels")
 export class HotelsController {
@@ -117,5 +119,23 @@ export class HotelsController {
     @Roles("admin")
     async updateHotelStatus(@Param("hotelId") hotelId: number, @Param("status") status: string) {
         return await this.hotelsService.updateHotelStatus(hotelId, status);
+    }
+
+    @Patch(':id')
+    @Roles('hotelier')
+    @ApiSecurity("hotelier")
+    @ApiOperation({ summary: 'Update basic info hotel' })
+    @ApiResponse({
+        status: 200,
+        description: 'Successfully retrieved discounts.',
+        type: ResponseDto,
+    })
+    @ApiResponse({
+        status: 500,
+        description: 'Internal server error.',
+    })
+    async update(@Param('id') id: string, @Body() updateHotelDto: UpdateHotelDto) {
+        const hotel = await this.hotelsService.update(+id, updateHotelDto);
+        return new ResponseDto(200, 'Update hotel successfully', hotel);
     }
 }

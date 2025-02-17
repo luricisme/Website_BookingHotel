@@ -25,7 +25,7 @@ export class Hotel {
     discount: number;
 
     @Column()
-    phone: number;
+    phone: string;
 
     @Column()
     email: string;

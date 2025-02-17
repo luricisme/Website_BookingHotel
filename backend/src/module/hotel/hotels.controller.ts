@@ -123,7 +123,6 @@ export class HotelsController {
 
     @Patch(':id')
     @Roles('hotelier')
-    @ApiSecurity("hotelier")
     @ApiOperation({ summary: 'Update basic info hotel' })
     @ApiResponse({
         status: 200,

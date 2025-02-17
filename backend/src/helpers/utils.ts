@@ -50,12 +50,6 @@ export class ResponseDto<T> {
         this.message = message;
         this.data = data;
     }
-
-    // constructor(
-    //     public statusCode: number,
-    //     public message: string,
-    //     public data: T
-    // ) {}
 }
 
 export const generatingRandomCode = (length: number) => {

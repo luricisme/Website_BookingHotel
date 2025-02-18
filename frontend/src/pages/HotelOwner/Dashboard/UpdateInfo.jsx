@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import { Modal, Form, Input, Button, message } from "antd";
 import { EditOutlined } from "@ant-design/icons";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import axios from "axios";
+import { doGetAccount } from "~/redux/action/accountAction";
 
-const UpdateInfo = ({ record, onSuccess }) => {
+const UpdateInfo = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
 
+    const dispatch = useDispatch();
     const userInfo = useSelector((state) => state.account.userInfo);
+    const accessToken = useSelector((state) => state.account.accessToken);
+    const hotelId = userInfo.hotel?.id;
 
     const showModal = () => {
         setIsModalOpen(true);
@@ -20,15 +25,44 @@ const UpdateInfo = ({ record, onSuccess }) => {
     };
 
     const onFinish = async (values) => {
+        if (!hotelId) {
+            message.error("Hotel ID not found");
+            return;
+        }
+
         try {
             setLoading(true);
-            console.log(values); // Log dữ liệu gửi lên
+            const payload = {
+                name: values.name,
+                phone: values.phone,
+                detailAddress: values.address,
+                // Preserving existing values that aren't being updated
+                email: userInfo.hotel?.email,
+                star: userInfo.hotel?.star,
+                description: userInfo.hotel?.description,
+                city: userInfo.hotel?.city,
+                district: userInfo.hotel?.district,
+                ward: userInfo.hotel?.ward
+            };
+
+            await axios.patch(
+                `http://localhost:3001/api/hotels/${hotelId}`,
+                payload,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
             message.success("Update hotel info successfully");
-            onSuccess();
+            // Refresh user info after update
+            dispatch(doGetAccount());
             handleCancel();
         } catch (error) {
-            console.log(error);
-            message.error("Update failed");
+            console.error("Update failed:", error);
+            message.error(error.response?.data?.message || "Update failed");
         } finally {
             setLoading(false);
         }
@@ -62,40 +96,26 @@ const UpdateInfo = ({ record, onSuccess }) => {
                         address: userInfo.hotel?.detailAddress || "",
                     }}
                 >
-                    <Form.Item label="Name:" name="name">
+                    <Form.Item
+                        label="Name:"
+                        name="name"
+                        rules={[{ required: true, message: "Please input hotel name!" }]}
+                    >
                         <Input />
                     </Form.Item>
-                    <Form.Item label="Telephone:" name="phone">
+                    <Form.Item
+                        label="Telephone:"
+                        name="phone"
+                        rules={[{ required: true, message: "Please input telephone number!" }]}
+                    >
                         <Input placeholder="Hotel's telephone" />
                     </Form.Item>
                     <Form.Item
                         label="Address:"
                         name="address"
+                        rules={[{ required: true, message: "Please input address!" }]}
                     >
                         <Input />
-                        <div className="row row-cols-2 row-cols-md-3 my-3">
-                            <div className="col">
-                                <select
-                                    className={`form-select form-select-lg fs-4` }
-                                >
-                                    <option value="">Select city</option>
-                                    <option value="1">Hanoi</option>
-                                </select>
-                            </div>
-                            <div className="col">
-                                <select className={`form-select form-select-lg fs-4` }
-                                >
-                                    <option value="">Select district</option>
-                                </select>
-                            </div>
-                            <div className="col">
-                                <select
-                                    className={`form-select form-select-lg fs-4`}
-                                >
-                                    <option value="">Select ward</option>
-                                </select>
-                            </div>
-                        </div>
                     </Form.Item>
                 </Form>
             </Modal>

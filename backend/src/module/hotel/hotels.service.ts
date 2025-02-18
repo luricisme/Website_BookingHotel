@@ -747,6 +747,22 @@ export class HotelsService {
       );
     }
   }
+
+  async update(id: number, updateHotelDto: UpdateHotelDto) {
+    try {
+      const affected = (await this.hotelRepository.update({id}, updateHotelDto)).affected;
+      if (affected === 0) {
+        throw new BadRequestException('Hotel does not exist');
+      }
+      return await this.hotelRepository.findOne({
+        where: {
+          id
+        }
+      });
+    } catch (error) {
+      throw new BadRequestException('Hotel not found');
+    }
+  }
 }
 
 function removeDiacritics(value: string): string {
@@ -755,3 +771,4 @@ function removeDiacritics(value: string): string {
     .replace(/[\u0300-\u036f]/g, '') // Loại bỏ dấu
     .toLowerCase(); // Chuyển thành chữ thường
 }
+

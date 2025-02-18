@@ -39,8 +39,21 @@ export class LocationsService {
     return `This action returns a #${id} location`;
   }
 
-  update(id: number, updateLocationDto: UpdateLocationDto) {
-    return `This action updates a #${id} location`;
+  async update(id: number, updateLocationDto: UpdateLocationDto) {
+    try {
+      const updatedLocation = await this.locationRepository.update(id, updateLocationDto);
+      if (updatedLocation.affected < 1) {
+        throw new BadRequestException("Update location failed");
+      }
+      return await this.locationRepository.findOne({
+        where: {
+          id
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   remove(id: number) {

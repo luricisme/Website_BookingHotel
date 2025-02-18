@@ -4,6 +4,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -27,6 +28,7 @@ import { Cron } from '@nestjs/schedule';
 import { AddInformationDto } from './dto/add-information.dto';
 import { DataSource, QueryRunner } from 'typeorm';
 import { MailService } from '@/mail/mail.service';
+import * as moment from 'moment-timezone';
 
 @Injectable()
 export class BookingService {
@@ -1315,6 +1317,24 @@ export class BookingService {
       };
     } catch (error) {
       throw new Error(`Error fetching total occupied rooms: ${error.message}`);
+    }
+  }
+
+  async monthlyRevenue(hotelId: number) {
+    try {
+      const rawReports = await this.bookingRepository.createQueryBuilder("b")
+                      .select("DATE_TRUNC('month', b.createdAt)", "month")
+                      .addSelect("SUM(b.price)", "revenue")
+                      .where("EXTRACT(month FROM b.createdAt) BETWEEN :startMonth AND :endMonth", {startMonth: 1, endMonth: 12})
+                      .andWhere("b.hotelId = :hotelId", {hotelId})
+                      .andWhere("b.status = 'completed'")
+                      .groupBy("DATE_TRUNC('month', b.createdAt)")
+                      .orderBy("DATE_TRUNC('month', b.createdAt)")
+                      .getRawMany();
+      const reports = rawReports.map(r => ({...r, month: moment(r.month).tz('Asia/Ho_Chi_Minh').format("YYYY-MM")}));
+      return reports;
+    } catch (error) {
+      throw new InternalServerErrorException;
     }
   }
 }

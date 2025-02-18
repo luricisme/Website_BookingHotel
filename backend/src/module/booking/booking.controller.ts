@@ -9,6 +9,10 @@ import { Public } from '@/helpers/decorator/public';
 import { GetHistoryBookingDto } from './dto/get-history-booking.dto';
 import { AddInformationDto } from './dto/add-information.dto';
 import { Roles } from '@/helpers/decorator/roles';
+import { ResponseDto } from '@/helpers/utils';
+import * as moment from 'moment';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { MonthlyReportResponseDto } from './dto/report-monthly-res.dto';
 
 @Controller('booking')
 export class BookingController {
@@ -132,5 +136,27 @@ export class BookingController {
   @Roles("hotelier")
   async getTotalCheckOut(@Param('id') id: number) {
     return await this.bookingService.totalcheckOut(id);
+  }
+
+
+  @Get('report/monthly/:hotelId')
+  @Public()
+  @ApiOperation({ summary: 'Getting monthly report' })
+  @ApiResponse({
+      status: 200,
+      description: 'Successfully',
+      type: [MonthlyReportResponseDto],
+  })
+  @ApiResponse({
+      status: 400,
+      description: 'Cannot find hotel',
+  })
+  async getMonthlyRevenue(@Param('hotelId') hotelId: string) {
+    const report = await this.bookingService.monthlyRevenue(+hotelId);
+    if (report.length < 1) {
+      return new ResponseDto(400, "Cannot find hotel", {});
+    } else {
+      return new ResponseDto(200, "Successfully", report);
+    }
   }
 }

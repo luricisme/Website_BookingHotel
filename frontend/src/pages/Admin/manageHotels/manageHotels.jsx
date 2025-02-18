@@ -93,6 +93,10 @@ function ManageHotels() {
         setShowModal(false);
     };
 
+    const handleHotelClick = (hotelId) => {
+        navigate(`/admin/manage-hotels/${hotelId}`);
+    };
+
     return (
         <div className="d-flex flex-column px-5 py-3 m-5 hotels">
             <div className="d-flex justify-content-between mb-4">
@@ -123,10 +127,9 @@ function ManageHotels() {
                                     style={{
                                         cursor: "pointer",
                                     }}
-                                    onClick={() => navigate(`/admin/manage-hotels/${app.id}`, { state: app })}
                                 >
                                     <td>{app.id}</td>
-                                    <td>{app.name}</td>
+                                    <td onClick={() => handleHotelClick(app.id)}>{app.name}</td>
                                     <td>{app.hotelierName}</td>
                                     <td>{app.location}</td>
                                     <td>

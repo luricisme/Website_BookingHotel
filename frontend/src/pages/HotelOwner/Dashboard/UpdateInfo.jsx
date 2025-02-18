@@ -36,10 +36,10 @@ const UpdateInfo = () => {
                 name: values.name,
                 phone: values.phone,
                 detailAddress: values.address,
+                description: values.description,
                 // Preserving existing values that aren't being updated
                 email: userInfo.hotel?.email,
                 star: userInfo.hotel?.star,
-                description: userInfo.hotel?.description,
                 city: userInfo.hotel?.city,
                 district: userInfo.hotel?.district,
                 ward: userInfo.hotel?.ward
@@ -94,6 +94,7 @@ const UpdateInfo = () => {
                         name: userInfo.hotel?.name || "",
                         phone: userInfo.hotel?.phone || "",
                         address: userInfo.hotel?.detailAddress || "",
+                        description: userInfo.hotel?.description || ""
                     }}
                 >
                     <Form.Item
@@ -116,6 +117,13 @@ const UpdateInfo = () => {
                         rules={[{ required: true, message: "Please input address!" }]}
                     >
                         <Input />
+                    </Form.Item>
+                    <Form.Item
+                        label="Description:"
+                        name="description"
+                        rules={[{ required: true, message: "Please input hotel description!" }]}
+                    >
+                        <Input.TextArea />
                     </Form.Item>
                 </Form>
             </Modal>

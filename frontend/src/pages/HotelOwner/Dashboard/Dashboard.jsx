@@ -93,6 +93,7 @@ const Dashboard = () => {
                             {userInfo.hotel?.detailAddress || "N/A"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Star">{userInfo.hotel?.star}</Descriptions.Item>
+                        <Descriptions.Item label="Description">{userInfo.hotel?.description}</Descriptions.Item>
                     </Descriptions>
                 </div>
 

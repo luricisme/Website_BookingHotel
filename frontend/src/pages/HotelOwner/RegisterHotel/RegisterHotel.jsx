@@ -3,15 +3,10 @@ import { Button, Result } from "antd";
 import styled from "styled-components";
 
 import Stepper from "~/components/Stepper/Stepper";
-import {
-    PropertyDetail,
-    RoomDetail,
-    HotelImages,
-    FinalStep,
-} from "~/components/HotelOwner/HotelRegister";
+import { PropertyDetail, HotelImages, FinalStep } from "~/components/HotelOwner/HotelRegister";
 import "./RegisterHotel.scss";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { doGetAccount } from "~/redux/action/accountAction";
 import axios from "~/utils/axiosCustomize";
 
@@ -38,8 +33,6 @@ const RegisterHotel = () => {
     const reduxDispatch = useDispatch();
     const navigate = useNavigate();
 
-    const account = useSelector((state) => state.account);
-
     const stepsConfig = [
         {
             title: "Property details",
@@ -61,73 +54,73 @@ const RegisterHotel = () => {
         payment: {},
     });
 
-    const persistData = async () => {
-        // Persist data to the server
-        // console.log(">>> Persist data", formData);
-        const userId = localStorage.getItem("user_id");
-        // console.log(">>> User ID", userId);
-        try {
-            // // Gửi propertyDetails
-            const propertyResponse = await axios.post(
-                `http://localhost:3001/api/hotels/add/basicInfo/${userId}`,
-                formData.propertyDetails,
-                {}
-            );
-            // console.log("Property details response:", propertyResponse.data);
-
-            const hotelId = propertyResponse.data.hotel;
-            // console.log("Hotel ID:", hotelId);
-
-            // console.log(">>> formData", formData.images);
-            // Gửi images
-            // Chuẩn bị FormData cho images
-            const formDataFiles = new FormData();
-            formData.images.forEach((image) => {
-                formDataFiles.append("images", image);
-            });
-            console.log("FormData:", formDataFiles);
-            const imagesResponse = await axios.post(
-                `http://localhost:3001/api/hotels/images/upload/${hotelId}`,
-                formDataFiles,
-                {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                }
-            );
-            // console.log("Images response:", imagesResponse.data);
-
-            // Gửi payment
-            const paymentResponse = await axios.post(
-                `http://localhost:3001/api/hotels/payment/add/${hotelId}`,
-                formData.payment.paymentAccount
-            );
-            // console.log("Payment response:", paymentResponse.data);
-
-            // // Gửi roomDetails
-            const { doubleRoomPrice, quadRoomPrice } = formData.payment;
-            const roomDetailsResponse = await axios.post(
-                `http://localhost:3001/api/room_types/add/${hotelId}`,
-                {
-                    doubleRoomPrice,
-                    quadRoomPrice,
-                }
-            );
-
-            reduxDispatch(doGetAccount());
-
-            // console.log("Room details response:", roomDetailsResponse.data);
-        } catch {
-            console.log("Error when sending property details");
-        }
-    };
-
     useEffect(() => {
+        const persistData = async () => {
+            // Persist data to the server
+            // console.log(">>> Persist data", formData);
+            const userId = localStorage.getItem("user_id");
+            // console.log(">>> User ID", userId);
+            try {
+                // // Gửi propertyDetails
+                const propertyResponse = await axios.post(
+                    `http://localhost:3001/api/hotels/add/basicInfo/${userId}`,
+                    formData.propertyDetails,
+                    {}
+                );
+                // console.log("Property details response:", propertyResponse.data);
+
+                const hotelId = propertyResponse.data.hotel;
+                // console.log("Hotel ID:", hotelId);
+
+                // console.log(">>> formData", formData.images);
+                // Gửi images
+                // Chuẩn bị FormData cho images
+                const formDataFiles = new FormData();
+                formData.images.forEach((image) => {
+                    formDataFiles.append("images", image);
+                });
+                console.log("FormData:", formDataFiles);
+                const imagesResponse = await axios.post(
+                    `http://localhost:3001/api/hotels/images/upload/${hotelId}`,
+                    formDataFiles,
+                    {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    }
+                );
+                console.log("Images response:", imagesResponse.data);
+
+                // Gửi payment
+                const paymentResponse = await axios.post(
+                    `http://localhost:3001/api/hotels/payment/add/${hotelId}`,
+                    formData.payment.paymentAccount
+                );
+                console.log("Payment response:", paymentResponse.data);
+
+                // // Gửi roomDetails
+                const { doubleRoomPrice, quadRoomPrice } = formData.payment;
+                const roomDetailsResponse = await axios.post(
+                    `http://localhost:3001/api/room_types/add/${hotelId}`,
+                    {
+                        doubleRoomPrice,
+                        quadRoomPrice,
+                    }
+                );
+
+                reduxDispatch(doGetAccount());
+
+                console.log("Room details response:", roomDetailsResponse.data);
+            } catch {
+                console.log("Error when sending property details");
+            }
+        };
+
         if (isComplete) {
             console.log(">>> formData", formData);
             persistData();
         }
-    }, [formData]);
+    }, [formData, isComplete, reduxDispatch]);
 
     const updateStepData = (stepKey, payload) => {
         dispatch({ type: "UPDATE_STEP", stepKey, payload });

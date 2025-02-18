@@ -1,28 +1,60 @@
-import React from "react";
-import { Modal, Space, Table, Button, Popconfirm } from "antd";
+import React, { useCallback, useEffect, useState } from "react";
+import { Modal, Space, Table, Button, Popconfirm, message } from "antd";
 import { QuestionCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import AddDiscount from "./AddDiscount";
 import { useNavigate } from "react-router-dom";
 import EditDiscount from "./EditDiscount";
+import { deleteDiscount, getDiscounts, updateDiscountStatus } from "../../../services/apiService";
+import { Capitalize } from "../../../utils/stringUtils";
+import { formatDate } from "../../../utils/datetime";
+import StyledStatusSelect from "./StyledStatusSelect";
 
 const Discount = () => {
     const userInfo = useSelector((state) => state.account.userInfo);
 
     const navigate = useNavigate();
 
-    const mockData = [
-        {
-            key: "1",
-            code: "DISCOUNT10",
-            value: "10%",
-            type: "Percentage",
-            num: 10,
-            start_at: "2021-09-01",
-            end_at: "2021-09-30",
-            status: "Active",
-        },
-    ];
+    const [discounts, setDiscounts] = useState([]);
+
+    const fetchDiscounts = useCallback(async () => {
+        try {
+            const res = await getDiscounts(userInfo.hotel.id);
+            if (res && +res.statusCode === 200) {
+                const discounts = res.data.map((discount) => ({
+                    ...discount,
+                    key: discount.id,
+                }));
+
+                setDiscounts(discounts);
+            }
+        } catch (error) {
+            console.error("Error fetching discounts:", error);
+        }
+    }, [userInfo.hotel]);
+
+    useEffect(() => {
+        if (userInfo.hotel) {
+            fetchDiscounts();
+        }
+    }, [fetchDiscounts, userInfo.hotel]);
+
+    const handleStatusChange = async (record, status) => {
+        console.log("Update status", record, status);
+        try {
+            const res = await updateDiscountStatus(record.id || record, {
+                status: Capitalize(status),
+            });
+            if (res && +res.statusCode === 200) {
+                message.success("Discount status updated successfully");
+                fetchDiscounts();
+            } else {
+                message.error("Failed to update discount status");
+            }
+        } catch (error) {
+            message.error("Failed to update discount status");
+        }
+    };
 
     const columns = [
         {
@@ -42,6 +74,7 @@ const Discount = () => {
             dataIndex: "type",
             key: "type",
             width: 100,
+            render: (text) => Capitalize(text),
         },
         {
             title: "Num",
@@ -54,18 +87,29 @@ const Discount = () => {
             dataIndex: "start_at",
             key: "start_at",
             width: 120,
+            render: (text) => formatDate(new Date(text), "yyyy-mm-dd") || "N/A",
         },
         {
             title: "End Date",
             dataIndex: "end_at",
             key: "end_at",
             width: 120,
+            render: (text) => formatDate(new Date(text), "yyyy-mm-dd") || "N/A",
         },
         {
             title: "Status",
             dataIndex: "status",
             key: "status",
             width: 100,
+            render: (status, record) => (
+                <>
+                    <StyledStatusSelect
+                        status={status}
+                        record={record}
+                        handleStatusChange={handleStatusChange}
+                    />
+                </>
+            ),
         },
         {
             title: "Action",
@@ -75,10 +119,9 @@ const Discount = () => {
             render: (text, record) => (
                 <Space size="small">
                     <EditDiscount
-                        record={record}
+                        record={{ ...record, type: Capitalize(record.type) }}
                         onSuccess={() => {
-                            // Refresh discount list
-                            // fetchDiscounts();
+                            fetchDiscounts();
                         }}
                     />
                     <Popconfirm
@@ -89,15 +132,17 @@ const Discount = () => {
                         cancelText="No"
                         onConfirm={async () => {
                             console.log("Delete record", record);
-                            // try {
-                            //     const res = await deleteRoom(record.key);
-                            //     if (res && +res.status === 200) {
-                            //         toast.success("Discount deleted successfully");
-                            //         fetchRooms();
-                            //     }
-                            // } catch (error) {
-                            //     toast.error("Failed to delete discount");
-                            // }
+                            try {
+                                const res = await deleteDiscount(record.id);
+                                if (res && +res.statusCode === 200) {
+                                    message.success("Discount deleted successfully");
+                                    fetchDiscounts();
+                                } else {
+                                    message.error("Failed to delete discount");
+                                }
+                            } catch (error) {
+                                message.error("Failed to delete discount");
+                            }
                         }}
                     >
                         <Button
@@ -119,6 +164,7 @@ const Discount = () => {
 
     const handleDiscountAdded = () => {
         // Refresh discount list
+        fetchDiscounts();
     };
 
     return (
@@ -145,7 +191,7 @@ const Discount = () => {
                     <div style={{ minWidth: "800px" }}>
                         <Table
                             columns={columns}
-                            dataSource={mockData}
+                            dataSource={discounts}
                             scroll={{ x: 800 }}
                             tableLayout="fixed"
                             loading={false}

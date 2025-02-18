@@ -1,4 +1,5 @@
 import axios from "~/utils/axiosCustomize";
+import { addDays, formatDate } from "../utils/datetime";
 
 // Auth
 const userLogin = async (data) => {
@@ -17,6 +18,14 @@ const getProfile = async () => {
 
 const getRefreshToken = async () => {
     return await axios.get(`/auth/renew_token/${localStorage.getItem("refresh_token")}`);
+};
+
+const sendResetCode = async (email) => {
+    return await axios.get(`/auth/forgetPassword/${email}`);
+};
+
+const resetPassword = async (data) => {
+    return await axios.post("/auth/resetPassword", data);
 };
 
 // Search
@@ -117,18 +126,6 @@ const getAvatarUrl = async (email) => {
 
 // Booking
 const startBooking = async (data) => {
-    const {
-        hotelId,
-        checkInDate,
-        checkOutDate,
-        roomType2,
-        type2Price,
-        roomType4,
-        type4Price,
-        sumPrice,
-        userId,
-    } = data;
-
     return await axios.post("/booking/start", data);
 };
 
@@ -136,9 +133,10 @@ const getBookingInfo = async () => {
     return await axios.get("/booking/information");
 };
 
-const postBookingInfo = async (note) => {
+const postBookingInfo = async (note, totalPrice = 0) => {
     return await axios.post("/booking/information", {
         note,
+        totalPrice,
     });
 };
 
@@ -149,6 +147,13 @@ const checkTimeBooking = async () => {
 const paymentBooking = async (data) => {
     return await axios.post("/booking/finish", {
         paymentMethod: data,
+    });
+};
+
+const applyDiscount = async (id_discount, oldSumPrice) => {
+    return await axios.post(`/booking/apply-discount`, {
+        id_discount,
+        oldSumPrice,
     });
 };
 
@@ -255,6 +260,37 @@ const getTodayCheckOut = async (hotelId) => {
     return await axios.get(`/booking/total/o/${hotelId}`);
 };
 
+// Discount
+const getDiscounts = async (hotelId) => {
+    return await axios.get(`/discounts/all/${hotelId}`);
+};
+
+const createDiscount = async (data) => {
+    const persistedData = {
+        status: data.status?.toLowerCase() || "active",
+        code: data.code || "",
+        type: data.type?.toLowerCase() || "",
+        value: data.value || 0,
+        num: data.num || 1,
+        start_at: data.start_at || formatDate(new Date(), "yyyy-mm-dd"),
+        end_at: data.end_at || formatDate(addDays(new Date(), 30), "yyyy-mm-dd"),
+    };
+
+    return await axios.post("/discounts/create", persistedData);
+};
+
+const updateDiscount = async (discountId, updateData) => {
+    return await axios.patch(`/discounts/update/${discountId}`, updateData);
+};
+
+const updateDiscountStatus = async (discountId, status) => {
+    return await axios.patch(`/discounts/update/${discountId}`, status);
+};
+
+const deleteDiscount = async (discountId) => {
+    return await axios.delete(`/discounts/delete/${discountId}`);
+};
+
 // Guest
 const updateStatus = async (reservationId, status) => {
     return await axios.patch(
@@ -302,4 +338,12 @@ export {
     getTodayCheckOut,
     updateStatus,
     updateHotelRequestStatus,
+    createDiscount,
+    getDiscounts,
+    updateDiscount,
+    deleteDiscount,
+    updateDiscountStatus,
+    sendResetCode,
+    resetPassword,
+    applyDiscount,
 };

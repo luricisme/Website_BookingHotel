@@ -15,6 +15,7 @@ import AccountSetting from "../pages/Account";
 import Review from "~/pages/Review";
 import HandlePolicy from "../pages/HandlePolicy/index.jsx";
 import Regulations from "../pages/Regulations/index.jsx";
+import { ForgotPassword } from "~/components/ResetPassword";
 
 // Hotel Owner Pages
 import RegisterHotel from "~/pages/HotelOwner/RegisterHotel/RegisterHotel";
@@ -41,6 +42,7 @@ import ManageRequests from "../pages/Admin/manageRequets/manageRequests";
 import AdminLogin from "../pages/Admin/login/login";
 import RequestDetails from "../pages/Admin/RequestDetails/requestDetails";
 import AdminHotelDetails from "../pages/Admin/manageHotels/hotelDetails";
+// import RequestDetails from "../pages/Admin/RequestDetails/requestDetails";
 import NotFound from "~/pages/NotFound/NotFound";
 
 const publicRoutes = [
@@ -52,6 +54,11 @@ const publicRoutes = [
     {
         path: "/unauthorized",
         component: Unauthorized,
+        layout: NoneLayout,
+    },
+    {
+        path: "/forgot-password",
+        component: ForgotPassword,
         layout: NoneLayout,
     },
     {

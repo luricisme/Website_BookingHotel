@@ -1327,7 +1327,7 @@ export class BookingService {
                       .addSelect("SUM(b.price)", "revenue")
                       .where("EXTRACT(month FROM b.createdAt) BETWEEN :startMonth AND :endMonth", {startMonth: 1, endMonth: 12})
                       .andWhere("b.hotelId = :hotelId", {hotelId})
-                      .andWhere("b.status = 'confirmed'")
+                      .andWhere("b.status = 'completed'")
                       .groupBy("DATE_TRUNC('month', b.createdAt)")
                       .orderBy("DATE_TRUNC('month', b.createdAt)")
                       .getRawMany();

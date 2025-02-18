@@ -128,8 +128,6 @@ const AfterSearch = () => {
     }, [filterData, currentPage, pageSize]);
 
     const handleSearch = useCallback((searchData) => {
-        // console.log("Search data:", searchData);
-
         // save to session storage
         sessionStorage.setItem("searchData", JSON.stringify(searchData));
 
@@ -144,7 +142,7 @@ const AfterSearch = () => {
             window.scrollTo(0, 0);
             fetchHotels();
         }
-    }, [searchData]);
+    }, [fetchHotels, searchData]);
 
     const handlePaginationChange = useCallback((page, pageSize) => {
         setCurrentPage(page);

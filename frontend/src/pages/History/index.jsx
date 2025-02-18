@@ -113,7 +113,7 @@ const History = () => {
                         date={card.date}
                         time={card.time}
                         status={card.status}
-                        id={card.id}
+                        id={card.hotelId}
                         hotelName={card.name}
                         money={card.totalcost}
                     />

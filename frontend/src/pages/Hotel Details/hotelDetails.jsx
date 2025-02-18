@@ -14,8 +14,19 @@ import { Modal } from "react-bootstrap";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import staticImages from "~/assets/image";
+import { LoadingOutlined } from "@ant-design/icons";
+import ReviewSection from "~/components/ReviewCard/ReviewSection";
+
+// Import Swiper React components và các module
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+
+// Import style
+import "swiper/css";
+import "swiper/css/navigation";
 
 import axios from "~/utils/axiosCustomize";
+import { Button, Spin } from "antd";
 
 const HotelDetails = () => {
     const { t } = useTranslation();
@@ -24,10 +35,13 @@ const HotelDetails = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const [loading, setLoading] = useState(false);
+
     const { checkInDate, checkOutDate, numOfPeople } = location.state || {};
     const [isFavorite, setIsFavorite] = useState(isFav);
-    console.log("check in: ", checkInDate);
-    console.log("isFavorite: ", isFav);
+
+    console.log(">>> Location state: ", location.state);
+
     const mapPositionRef = useRef([10.5279716, 107.3921728]);
     const [showMapModal, setShowMapModal] = useState(true);
 
@@ -73,8 +87,8 @@ const HotelDetails = () => {
             const response = await getHotelDetail(id, {
                 checkInDate: startDate,
                 checkOutDate: endDate,
-                roomType2: numOfPeople.roomType2 || 1,
-                roomType4: numOfPeople.roomType4 || 1,
+                roomType2: numOfPeople.roomType2 ?? 0,
+                roomType4: numOfPeople.roomType4 ?? 0,
             });
 
             console.log(">>> Hotel detail: ", response.data);
@@ -162,17 +176,21 @@ const HotelDetails = () => {
                 const response = await axios.get(
                     `/hotels/${id}?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&roomType2=${roomType2}&roomType4=${roomType4}`
                 );
+
                 const data = response;
+
+                console.log(">>> Hotel details: ", data);
+
                 if (data.status_code === 200) {
                     const room1 = data.data.room_types[0];
                     const room2 = data.data.room_types[1];
 
-                    setRoomPrice1(room1.price);
-                    setRoomPrice2(room2.price);
+                    setRoomPrice1(room1?.price || 0);
+                    setRoomPrice2(room2?.price || 0);
 
                     const isWeekendDay = checkWeekend(checkInDate) || checkWeekend(checkOutDate);
-                    const initialPrice1 = isWeekendDay ? room1.weekend_price : room1.price;
-                    const initialPrice2 = isWeekendDay ? room2.weekend_price : room2.price;
+                    const initialPrice1 = isWeekendDay ? room1.weekend_price : room1?.price || 0;
+                    const initialPrice2 = isWeekendDay ? room2.weekend_price : room2?.price || 0;
 
                     if (currency === "VND") {
                         setRoomPrice1Now(initialPrice1);
@@ -182,9 +200,20 @@ const HotelDetails = () => {
                         setRoomPrice2Now(convertPrice(initialPrice2, "VND", currency));
                     }
 
+                    // setRoomCounts({
+                    //     [room1.id]: roomType2 || 1,
+                    //     [room2?.id]: roomType4 || 1,
+                    // });
+
                     setRoomCounts({
-                        [room1.id]: roomType2 || 1,
-                        [room2.id]: roomType4 || 1,
+                        [room1.id]:
+                            data.data.numberOfRoom2 >= roomType2
+                                ? roomType2
+                                : data.data.numberOfRoom2 ?? 1,
+                        [room2?.id]:
+                            data.data.numberOfRoom4 >= roomType4
+                                ? roomType4
+                                : data.data.numberOfRoom4 ?? 1,
                     });
 
                     setMaxRoom2(data.data.numberOfRoom2);
@@ -217,9 +246,24 @@ const HotelDetails = () => {
 
         fetchReviews();
         fetchHotelDetails();
-    }, [id, location.state]);
+    }, [convertPrice, currency, id, location.state]);
 
-    if (!isLoaded) return <div>Loading...</div>;
+    if (!isLoaded)
+        return (
+            <Spin
+                style={{ display: "block", margin: "200px auto" }}
+                indicator={
+                    <LoadingOutlined
+                        style={{
+                            fontSize: 50,
+                            fontWeight: "bold",
+                        }}
+                        spin
+                    />
+                }
+                size="large"
+            ></Spin>
+        );
 
     if (!hotelDetails) return <div>No details available</div>;
 
@@ -236,9 +280,9 @@ const HotelDetails = () => {
         }
 
         const numberOfRoom2 =
-            roomCounts[hotelDetails.room_types.find((room) => room.type === 2).id] || 0;
+            roomCounts[hotelDetails.room_types.find((room) => room.type === 2)?.id] || 0;
         const numberOfRoom4 =
-            roomCounts[hotelDetails.room_types.find((room) => room.type === 4).id] || 0;
+            roomCounts[hotelDetails.room_types.find((room) => room.type === 4)?.id] || 0;
 
         const data = {
             hotelId: +id,
@@ -260,6 +304,7 @@ const HotelDetails = () => {
         console.log(">>> Start booking data: ", data);
 
         try {
+            setLoading(true);
             const res = await startBooking(data);
             console.log(">>> Start booking response: ", res);
 
@@ -278,6 +323,8 @@ const HotelDetails = () => {
         } catch (error) {
             console.error(">>> Error: ", error);
             toast.error("Error while starting booking");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -525,9 +572,14 @@ const HotelDetails = () => {
                                             }, 0)
                                             .toLocaleString()}
                                     </p>
-                                    <button
-                                        className="btn btn-success"
-                                        style={{ fontSize: "20px", padding: "5px 15px" }}
+                                    <Button
+                                        type="primary"
+                                        loading={loading} // Thêm prop loading nếu bạn cần
+                                        style={{
+                                            fontSize: "20px",
+                                            padding: "5px 15px",
+                                            height: "auto", // Để button co giãn theo nội dung
+                                        }}
                                         onClick={() => handleReserve()}
                                         disabled={
                                             Object.values(roomCounts).reduce(
@@ -537,7 +589,7 @@ const HotelDetails = () => {
                                         }
                                     >
                                         {t("hotelDetail.reserve")}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -547,47 +599,7 @@ const HotelDetails = () => {
                             {t("hotelDetail.customerReviews")}
                         </p>
                         {/* Reviews Section */}
-                        <div className="reviews-section">
-                            {reviews.length > 0 ? (
-                                reviews.map((review) => (
-                                    <div className="review-card" key={review.id}>
-                                        <div className="profile-pic">
-                                            <img
-                                                src={review.avatar}
-                                                alt="Profile"
-                                                className="avatar-image"
-                                            />
-                                        </div>
-                                        <div className="name mb-2 fs-2 fw-bold">{review.name}</div>
-                                        <div className="stars">
-                                            {Array.from({ length: 5 }).map((_, index) => {
-                                                const isFullStar = review.rate >= index + 1;
-                                                const isHalfStar =
-                                                    review.rate > index && review.rate < index + 1;
-                                                return isFullStar ? (
-                                                    <img
-                                                        key={index}
-                                                        src={icons.starYellowIcon}
-                                                        alt="Star"
-                                                        className="star-icon"
-                                                    />
-                                                ) : (
-                                                    <img
-                                                        key={index}
-                                                        src={icons.starEmptyIcon}
-                                                        alt="Empty Star"
-                                                        className="star-gray-icon"
-                                                    />
-                                                );
-                                            })}
-                                        </div>
-                                        <div className="comment">{review.comment}</div>
-                                    </div>
-                                ))
-                            ) : (
-                                <p>No reviews available.</p>
-                            )}
-                        </div>
+                        <ReviewSection reviews={reviews} />
                     </div>
                 </div>
             </div>

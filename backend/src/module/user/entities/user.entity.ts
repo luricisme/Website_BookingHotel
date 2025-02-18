@@ -46,6 +46,9 @@ export class User {
     @Column({type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     codeExpired: Date;
 
+    @Column({default: false, name: "isActive"})
+    isActive: boolean;
+
     @OneToMany(() => Booking, (booking) => booking.user)
     bookings: Booking[];
 

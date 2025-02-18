@@ -1,0 +1,86 @@
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:400,400i,700,900&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+    <style>
+      body {
+        text-align: center;
+        padding: 40px 0;
+        background: #EBF0F5;
+      }
+        h1 {
+          color: #88B04B;
+          font-family: "Nunito Sans", "Helvetica Neue", sans-serif;
+          font-weight: 900;
+          font-size: 40px;
+          margin-bottom: 10px;
+        }
+        h1 .error {
+          color: #b04b4b;
+          font-family: "Nunito Sans", "Helvetica Neue", sans-serif;
+          font-weight: 900;
+          font-size: 40px;
+          margin-bottom: 10px;
+        }
+        p {
+          color: #404F5E;
+          font-family: "Nunito Sans", "Helvetica Neue", sans-serif;
+          font-size:20px;
+          margin: 0;
+        }
+      i {
+        color: #9ABC66;
+        font-size: 100px;
+        line-height: 200px;
+        margin-left:-15px;
+      }
+      i .error{
+        color: #bc6666;
+        font-size: 100px;
+        line-height: 200px;
+        margin-left:-15px;
+      }
+      .card {
+        background: white;
+        padding: 60px;
+        border-radius: 4px;
+        box-shadow: 0 2px 3px #C8D0D8;
+        display: inline-block;
+        margin: 0 auto;
+      }
+      .msg.d-none {
+        display: none;
+      }
+    </style>
+    <body>
+      <div class="card">
+      <div style="border-radius:200px; height:200px; width:200px; background: #F8FAF5; margin:0 auto;">
+            <i class="error">✗</i>
+      </div>
+            <h1 class="error">Error</h1> 
+        <p>{{message}}</p>
+            <div class="resendBtn" style="text-align: center; margin-top: 20px;">
+                <a href="{{verifyUrl}}" style="display: inline-block; background-color: #0070f3; color: white; padding: 12px 20px; font-size: 16px; text-decoration: none; border-radius: 5px;">
+                    Resend activation email
+                </a>
+
+                <p class="msg d-none" style="margin-top: 20px;"></p>
+            </div>
+      </div>
+
+      <script>
+        $(document).ready(function() {
+            $('.resendBtn a').on('click', function(e) {
+                e.preventDefault();
+                $('.resendBtn a').hide();
+                $('.resendBtn .msg').removeClass('d-none');
+                $('.resendBtn .msg').text('Resending email...');
+                setTimeout(function() {
+                    $('.resendBtn .msg').text('Activation email has been resend to your email.<br/> Please check again!');
+                }, 2000);
+            })
+        })
+      </script>
+    </body>
+</html>

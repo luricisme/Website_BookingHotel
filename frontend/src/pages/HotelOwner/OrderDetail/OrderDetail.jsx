@@ -29,7 +29,7 @@ const OrderDetail = () => {
             const response = await axios.get(
                 `/booking/guest/detail?userId=${userId}&bookingId=${reservationID}&page=${tableParams?.pagination?.current}&per_page=${tableParams?.pagination?.pageSize}`
             );
-            const data = await response.json();
+            const data = response;
             if (data.status_code === 200) {
                 setOrderData(data.data); // Cập nhật dữ liệu đặt phòng
 
@@ -110,6 +110,8 @@ const OrderDetail = () => {
                     title="Notice"
                     content="You have not registered any hotel yet. Please register your hotel first."
                     closeable={false}
+                    onCancel={() => navigate("/hotel-owner/login")}
+                    maskClosable={false}
                     onOk={() => navigate("/hotel-owner/register-hotel")}
                 >
                     <p>You have not registered any hotel yet. Please register your hotel first.</p>

@@ -13,6 +13,9 @@ import History from "../pages/History";
 import Favorite from "../pages/FAV";
 import AccountSetting from "../pages/Account";
 import Review from "~/pages/Review";
+import HandlePolicy from "../pages/HandlePolicy/index.jsx";
+import Regulations from "../pages/Regulations/index.jsx";
+import { ForgotPassword } from "~/components/ResetPassword";
 
 // Hotel Owner Pages
 import RegisterHotel from "~/pages/HotelOwner/RegisterHotel/RegisterHotel";
@@ -25,6 +28,8 @@ import {
     OrderDetail,
     Login as HotelOwnerLogin,
     Register as HotelOwnerRegister,
+    Report,
+    Discount,
 } from "~/pages/HotelOwner";
 import Unauthorized from "~/pages/Unauthorized/Unauthorized";
 
@@ -35,7 +40,7 @@ import ManageHotelOwners from "../pages/Admin/manageHotelOwners/manageHotelOwner
 import ManageHotels from "../pages/Admin/manageHotels/manageHotels";
 import ManageRequests from "../pages/Admin/manageRequets/manageRequests";
 import AdminLogin from "../pages/Admin/login/login";
-import RequestDetails from "../pages/Admin/RequestDetails/requestDetails";
+// import RequestDetails from "../pages/Admin/RequestDetails/requestDetails";
 import NotFound from "~/pages/NotFound/NotFound";
 
 const publicRoutes = [
@@ -47,6 +52,11 @@ const publicRoutes = [
     {
         path: "/unauthorized",
         component: Unauthorized,
+        layout: NoneLayout,
+    },
+    {
+        path: "/forgot-password",
+        component: ForgotPassword,
         layout: NoneLayout,
     },
     {
@@ -95,6 +105,16 @@ const publicRoutes = [
         path: "/review",
         component: Review,
         requiredRole: ["user"],
+    },
+    {
+        path: "/handle-policy",
+        component: HandlePolicy,
+        requiredRole: ["user", "guest", "hotelier", "admin"],
+    },
+    {
+        path: "/regulations",
+        component: Regulations,
+        requiredRole: ["user", "guest", "hotelier", "admin"],
     },
     {
         path: "/hotel/:id",
@@ -156,6 +176,18 @@ const publicRoutes = [
     {
         path: "/hotel-owner/room-type",
         component: RoomType,
+        layout: HotelOwnerLayout,
+        requiredRole: ["hotelier"],
+    },
+    {
+        path: "/hotel-owner/report",
+        component: Report,
+        layout: HotelOwnerLayout,
+        requiredRole: ["hotelier"],
+    },
+    {
+        path: "/hotel-owner/discount",
+        component: Discount,
         layout: HotelOwnerLayout,
         requiredRole: ["hotelier"],
     },

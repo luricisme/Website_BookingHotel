@@ -24,6 +24,7 @@ import chevronRightPinkIcon from "~/assets/icon/chevron-right-pink.svg";
 import checkIcon from "~/assets/icon/check-solid.svg";
 import closeIcon from "~/assets/icon/x-solid.svg";
 import arrowLeftIcon from "~/assets/icon/arrow-left-solid.svg";
+import phoneIcon from "~/assets/icon/phone-solid.svg";
 
 const icons = {
     questionIcon,
@@ -52,6 +53,7 @@ const icons = {
     checkIcon,
     closeIcon,
     arrowLeftIcon,
+    phoneIcon,
 };
 
 export default icons;

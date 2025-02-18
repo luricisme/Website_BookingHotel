@@ -3,9 +3,12 @@ import { toast } from "react-toastify";
 import "./register.css";
 import { useNavigate } from "react-router-dom";
 import { userRegister } from "~/services/apiService";
+import RegisterSuccess from "../../components/RegisterSuccess/RegisterSuccess";
 
 function RegisterForm() {
     const navigate = useNavigate();
+
+    const [isRegistrationSuccess, setIsRegistrationSuccess] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -73,13 +76,22 @@ function RegisterForm() {
 
             if (response && response.email === data.email) {
                 toast.success("Registration successful!");
-                navigate("/login");
+
+                setIsRegistrationSuccess(true);
+
+                // navigate("/login");
             }
         } catch (error) {
             toast.error("Registration failed!");
             console.error("Registration failed:", error);
         }
     };
+
+    if (isRegistrationSuccess) {
+        return (
+            <RegisterSuccess email={formData.contact} onBackToLogin={() => navigate("/login")} />
+        );
+    }
 
     return (
         <div className="p-4 d-flex justify-content-center align-items-center body">
@@ -182,7 +194,7 @@ function RegisterForm() {
                             onChange={handleChange}
                         />
                         <label htmlFor="agree">
-                            I agree with your <a href="#">privacy</a>.
+                            I agree with your <a href="#!">privacy</a>.
                         </label>
                     </div>
                     <input

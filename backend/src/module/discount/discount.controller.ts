@@ -5,7 +5,8 @@ import { ResponseDto } from '@/helpers/utils';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { Roles } from '@/helpers/decorator/roles';
 import { Public } from '@/helpers/decorator/public';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { Request } from 'express';
 
 @Controller('discounts')
 export class DiscountController {
@@ -17,6 +18,10 @@ export class DiscountController {
     @Public()
     @ApiOperation({ summary: 'Get all discounts for a hotel' })
     @ApiParam({ name: 'hotelId', type: String, description: 'The hotel ID' })
+    @ApiQuery({name: 'page', type: Number, required: false, description: 'The page number', example: 1})
+    @ApiQuery({name: 'limit', type: Number, required: false, description: 'The number of item per page', example: 5})
+    @ApiQuery({name: 'sortBy', type: String, required: false, description: 'The name of property to sort', example: 'id'})
+    @ApiQuery({name: 'order', type: String, required: false, description: 'The direction to sort', example: 'ASC'})
     @ApiResponse({
         status: 200,
         description: 'Successfully retrieved discounts.',
@@ -26,9 +31,9 @@ export class DiscountController {
         status: 500,
         description: 'Internal server error.',
     })
-    async getAllDiscount(@Param('hotelId') hotelId: string) {
+    async getAllDiscount(@Param('hotelId') hotelId: string, @Req() req: Request) {
         try {
-            const discounts = await this.discountService.getAll(+hotelId);
+            const discounts = await this.discountService.getAll(+hotelId, req);
             return new ResponseDto(200, "Successfully", discounts);
         } catch (error) {
             return new ResponseDto(500, error.message, null);

@@ -1,6 +1,7 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { CreateDiscountDto } from './create-discount.dto';
+import { Transform } from 'class-transformer';
 
 export class UpdateDiscountDto extends PartialType(OmitType(CreateDiscountDto, [])) {
     @ApiProperty({
@@ -17,6 +18,7 @@ export class UpdateDiscountDto extends PartialType(OmitType(CreateDiscountDto, [
         required: false, 
     })
     @IsOptional()
+    @Transform(({value} : {value: string}) => value ? value.toLowerCase() : value)
     status: string;
 
     @ApiProperty({

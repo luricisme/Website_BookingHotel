@@ -151,7 +151,8 @@ const SearchBarNoLocation = (props) => {
                     />
                 </div>
                 <div
-                    className="search-bar__input-group search-bar__input-group-people" style={{ cursor: "pointer"}}
+                    className="search-bar__input-group search-bar__input-group-people"
+                    style={{ cursor: "pointer" }}
                     onClick={() => handleTurnPopup()}
                 >
                     <div className="search-bar__input">
@@ -261,10 +262,7 @@ const SearchBarNoLocation = (props) => {
                         </div>
                     </div>
                 </div>
-                <div
-                    className="search-bar__btn ms-auto"
-                    onClick={() => handleClickSearchBtn()}
-                >
+                <div className="search-bar__btn ms-auto" onClick={() => handleClickSearchBtn()}>
                     <span className="mt-2">{t("searchBar.search")}</span>
                 </div>
             </div>

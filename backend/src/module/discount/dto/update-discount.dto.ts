@@ -38,6 +38,14 @@ export class UpdateDiscountDto extends PartialType(OmitType(CreateDiscountDto, [
     value: number;
 
     @ApiProperty({
+        description: 'Min value for discount',
+        example: 100000,
+        required: false
+    })
+    @IsOptional()
+    minAmount: number;
+
+    @ApiProperty({
         description: 'Start date of the discount (optional for update).',
         example: '2025-01-01T00:00:00.000Z', 
         required: false, 

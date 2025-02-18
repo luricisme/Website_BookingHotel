@@ -68,6 +68,9 @@ const Guest = () => {
             title: "Total Price",
             key: "totalPrice",
             dataIndex: "totalPrice",
+            render: (text) => {
+                return `${Number(text).toLocaleString()}`;
+            },
         },
         {
             title: "Status",

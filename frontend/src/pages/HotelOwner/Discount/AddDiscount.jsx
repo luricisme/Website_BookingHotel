@@ -106,6 +106,21 @@ const AddDiscount = ({ onSuccess }) => {
                     </Form.Item>
 
                     <Form.Item
+                        name="minAmount"
+                        label="Minimum Booking Amount"
+                        rules={[
+                            { required: true, message: "Please input minimum booking amount!" },
+                            { type: "number", min: 0, message: "Must be at least 0!" },
+                        ]}
+                    >
+                        <InputNumber
+                            style={{ width: "100%" }}
+                            placeholder="Enter minimum booking amount"
+                            min={0}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
                         name="type"
                         label="Discount Type"
                         rules={[{ required: true, message: "Please select discount type!" }]}

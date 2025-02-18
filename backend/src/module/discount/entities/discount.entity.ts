@@ -18,6 +18,9 @@ export class Discount {
     @Column()
     value: number;
 
+    @Column({default: 0, name: "minAmount"})
+    minAmount: number;
+
     @Column()
     @Column({default: Date.now()})
     start_at: Date;

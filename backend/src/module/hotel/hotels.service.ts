@@ -749,16 +749,28 @@ export class HotelsService {
   }
 
   async update(id: number, updateHotelDto: UpdateHotelDto) {
+    const {city, district, ward, detailAddress, ...hotel} = updateHotelDto;
     try {
-      const affected = (await this.hotelRepository.update({id}, updateHotelDto)).affected;
+      const affected = (await this.hotelRepository.update({id}, hotel)).affected;
       if (affected === 0) {
         throw new BadRequestException('Hotel does not exist');
       }
-      return await this.hotelRepository.findOne({
+      const updatedHotel = await this.hotelRepository.findOne({
         where: {
           id
         }
       });
+
+      const queryRunner = this.dataSource.createQueryRunner();
+      const locationId = (await queryRunner.query(`
+        SELECT "locationId"
+        FROM hotels_locations
+        WHERE "hotelId" = $1
+      `, [id]))[0].locationId;
+      const updatedLocation = await this.locationService.update(locationId, {city, district, name: ward, detailAddress});
+
+      await queryRunner.release();
+      return {...updatedHotel, location: updatedLocation};
     } catch (error) {
       throw new BadRequestException('Hotel not found');
     }

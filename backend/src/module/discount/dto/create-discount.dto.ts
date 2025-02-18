@@ -35,6 +35,13 @@ export class CreateDiscountDto extends OmitType(PartialType(Discount), ['id', 'h
     value: number;
 
     @ApiProperty({
+        description: 'Min value for discount',
+        example: 100000,
+    })
+    @IsNotEmpty()
+    minAmount: number;
+
+    @ApiProperty({
         description: 'Start date of the discount.',
         example: '2025-01-01T00:00:00.000Z',
     })

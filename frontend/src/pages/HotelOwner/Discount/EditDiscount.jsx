@@ -22,6 +22,7 @@ const EditDiscount = ({ record, onSuccess }) => {
                 value: parseFloat(record.value), // Convert from "10%" to 10
                 num: record.num,
                 dateRange: [moment(record.start_at), moment(record.end_at)],
+                minAmount: record.minAmount,
             });
         }
     }, [form, isModalOpen, record]);
@@ -109,6 +110,20 @@ const EditDiscount = ({ record, onSuccess }) => {
                     >
                         <Input placeholder="Enter discount code (e.g., SUMMER2024)" />
                     </Form.Item> */}
+                    <Form.Item
+                        name="minAmount"
+                        label="Minimum Booking Amount"
+                        rules={[
+                            { required: true, message: "Please input minimum booking amount!" },
+                            { type: "number", min: 0, message: "Must be at least 0!" },
+                        ]}
+                    >
+                        <InputNumber
+                            style={{ width: "100%" }}
+                            placeholder="Enter minimum booking amount"
+                            min={0}
+                        />
+                    </Form.Item>
 
                     <Form.Item
                         name="type"

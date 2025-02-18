@@ -119,7 +119,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [], setSumm
 
     const validateCoupon = (coupon) => {
         if (totalAmount < coupon.minAmount) {
-            return `Minimum order of $${coupon.minAmount.toLocaleString()} required to apply this code`;
+            return `Minimum order of đ${coupon.minAmount.toLocaleString()} required to apply this code`;
         }
         return null;
     };
@@ -285,7 +285,7 @@ const CouponSelector = ({ onApplyCoupon, totalAmount, discountList = [], setSumm
                                                 <Text>{coupon.description}</Text>
                                                 <br />
                                                 <Text type="secondary">
-                                                    Minimum order: $
+                                                    Minimum order: đ
                                                     {coupon.minAmount.toLocaleString()}
                                                 </Text>
                                             </>

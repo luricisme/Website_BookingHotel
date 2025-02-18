@@ -272,6 +272,7 @@ const createDiscount = async (data) => {
         type: data.type?.toLowerCase() || "",
         value: data.value || 0,
         num: data.num || 1,
+        minAmount: data.minAmount || 0,
         start_at: data.start_at || formatDate(new Date(), "yyyy-mm-dd"),
         end_at: data.end_at || formatDate(addDays(new Date(), 30), "yyyy-mm-dd"),
     };

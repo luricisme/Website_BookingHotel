@@ -6,7 +6,7 @@ import AddDiscount from "./AddDiscount";
 import { useNavigate } from "react-router-dom";
 import EditDiscount from "./EditDiscount";
 import { deleteDiscount, getDiscounts, updateDiscountStatus } from "../../../services/apiService";
-import { Capitalize } from "../../../utils/stringUtils";
+import { Capitalize, Lowercase } from "../../../utils/stringUtils";
 import { formatDate } from "../../../utils/datetime";
 import StyledStatusSelect from "./StyledStatusSelect";
 
@@ -69,7 +69,7 @@ const Discount = () => {
             key: "value",
             width: 100,
             render: (value, record) => {
-                if (record.type === "percentage") {
+                if (Lowercase(record.type) === "percentage") {
                     return `${value}%`;
                 } else {
                     return `${value.toLocaleString()}`;
@@ -90,14 +90,22 @@ const Discount = () => {
             width: 80,
         },
         {
-            title: "Start Date",
-            dataIndex: "start_at",
-            key: "start_at",
+            title: "Min Amount",
+            dataIndex: "minAmount",
+            key: "minAmount",
             width: 120,
-            render: (text) => formatDate(new Date(text), "yyyy-mm-dd") || "N/A",
+            render: (text) => Number(text).toLocaleString() || "N/A",
         },
+        // {
+        //     title: "Start Date",
+        //     dataIndex: "start_at",
+        //     key: "start_at",
+        //     width: 120,
+        //     render: (text) => formatDate(new Date(text), "yyyy-mm-dd") || "N/A",
+        // },
         {
-            title: "End Date",
+            // title: "End Date",
+            title: "Expiry Date",
             dataIndex: "end_at",
             key: "end_at",
             width: 120,

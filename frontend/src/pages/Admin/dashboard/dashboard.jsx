@@ -3,77 +3,74 @@ import React, { useState, useEffect } from "react";
 import "./dashboard.css";
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
-import { subDays, format } from "date-fns";
-import { DatePicker } from "antd";
+import { subDays, format, parseISO } from "date-fns";
+import dayjs from "dayjs";
+import { DatePicker, Select } from "antd";
 import axios from "~/utils/axiosCustomize";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const { RangePicker } = DatePicker;
-// Sample Monthly Data
-const sampleDataMonthly = [
-    { month: "2024-01", access: 500 },
-    { month: "2024-02", access: 1200 },
-    { month: "2024-03", access: 700 },
-    { month: "2024-04", access: 400 },
-    { month: "2024-05", access: 1100 },
-    { month: "2024-06", access: 1600 },
-    { month: "2024-07", access: 1700 },
-    { month: "2024-08", access: 1400 },
-    { month: "2024-09", access: 900 },
-    { month: "2024-10", access: 1000 },
-    { month: "2024-11", access: 900 },
-    { month: "2024-12", access: 800 },
-];
-
-// Sample Weekly Data
-const sampleDataWeekly = [
-    { startDate: "2024-01-01", endDate: "2024-01-07", access: 100 },
-    { startDate: "2024-01-08", endDate: "2024-01-14", access: 200 },
-    { startDate: "2024-01-15", endDate: "2024-01-21", access: 400 },
-    { startDate: "2024-02-01", endDate: "2024-02-07", access: 250 },
-    { startDate: "2024-02-08", endDate: "2024-02-14", access: 180 },
-    { startDate: "2024-03-01", endDate: "2024-03-07", access: 250 },
-    { startDate: "2024-03-08", endDate: "2024-03-14", access: 350 },
-    { startDate: "2024-03-15", endDate: "2024-03-21", access: 400 },
-    { startDate: "2024-04-01", endDate: "2024-04-07", access: 150 },
-    { startDate: "2024-04-08", endDate: "2024-04-14", access: 200 },
-    { startDate: "2024-05-01", endDate: "2024-05-07", access: 450 },
-    { startDate: "2024-05-08", endDate: "2024-05-14", access: 300 },
-];
-
-
-// Function to filter weekly data based on selected date range
-const filterWeeklyData = (data, startDate, endDate) => {
-    return data.filter(({ startDate: s, endDate: e }) => {
-        const start = new Date(s);
-        const end = new Date(e);
-        return (!startDate || start >= startDate) && (!endDate || end <= endDate);
-    });
-};
+const { Option } = Select;
 
 function Dashboard() {
-    const [applications, setApplications] = useState([]); // Chỉ lưu 7 request mới nhất
+    const [applications, setApplications] = useState([]);
     const [totals, setTotals] = useState({
         hotels: 0,
         users: 0,
         requests: 0,
     });
 
-    const [viewType, setViewType] = useState("monthly");
-    const [startDate, setStartDate] = useState(null);
-    const [endDate, setEndDate] = useState(null);
+    // Visit statistics state
+    const [visitStats, setVisitStats] = useState([]);
+    const [viewMode, setViewMode] = useState('monthly'); // 'monthly' or 'daily'
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-    const monthlyLabels = sampleDataMonthly.map((d) => d.month);
-    const monthlyData = sampleDataMonthly.map((d) => d.access);
+    // Using JavaScript Date objects internally
+    const [dateRange, setDateRange] = useState([
+        subDays(new Date(), 10), // 10 days ago
+        new Date() // today
+    ]);
 
-    const weeklyFiltered = filterWeeklyData(sampleDataWeekly, startDate, endDate);
-    const weeklyLabels = weeklyFiltered.map((d) => `${d.startDate} - ${d.endDate}`);
-    const weeklyData = weeklyFiltered.map((d) => d.access);
+    // For Ant Design DatePicker compatibility
+    const [dateRangeDayjs, setDateRangeDayjs] = useState([
+        dayjs().subtract(10, 'day'),
+        dayjs()
+    ]);
+
+    // Chart data state
+    const [chartData, setChartData] = useState({
+        labels: [],
+        datasets: [
+            {
+                label: 'Visits',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                tension: 0.1
+            }
+        ]
+    });
 
     useEffect(() => {
         fetchDashboardData();
+
+        // Fetch initial visit stats based on default view mode
+        if (viewMode === 'monthly') {
+            fetchMonthlyVisits(selectedYear);
+        } else {
+            fetchDailyVisits(dateRange[0], dateRange[1]);
+        }
     }, []);
+
+    // Effect to update chart when view mode changes
+    useEffect(() => {
+        if (viewMode === 'monthly') {
+            fetchMonthlyVisits(selectedYear);
+        } else {
+            fetchDailyVisits(dateRange[0], dateRange[1]);
+        }
+    }, [viewMode, selectedYear, dateRange]);
 
     const fetchDashboardData = async () => {
         try {
@@ -98,6 +95,123 @@ function Dashboard() {
         }
     };
 
+    const fetchMonthlyVisits = async (year) => {
+        try {
+            const response = await axios.get(`http://localhost:3001/api/visit/monthly-stats?year=${year}`);
+            if (response && Array.isArray(response)) {
+                setVisitStats(response);
+
+                // Format data for chart
+                const labels = response.map(item => {
+                    const [year, month] = item.month.split('-');
+                    return `${month}/${year}`;
+                });
+
+                const visitCounts = response.map(item => parseInt(item.total_visits));
+
+                setChartData({
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Monthly Visits',
+                            data: visitCounts,
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                            tension: 0.1
+                        }
+                    ]
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching monthly visit stats:", error);
+        }
+    };
+
+    const fetchDailyVisits = async (startDate, endDate) => {
+        try {
+            const formattedStartDate = format(startDate, 'yyyy-MM-dd');
+            const formattedEndDate = format(endDate, 'yyyy-MM-dd');
+
+            const response = await axios.get(
+                `http://localhost:3001/api/visit/daily-stats?startDate=${formattedStartDate}&endDate=${formattedEndDate}`
+            );
+
+            if (response && Array.isArray(response)) {
+                setVisitStats(response);
+
+                // Format data for chart
+                const labels = response.map(item => format(parseISO(item.date), 'dd/MM/yyyy'));
+                const visitCounts = response.map(item => item.visit_count);
+
+                setChartData({
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Daily Visits',
+                            data: visitCounts,
+                            borderColor: 'rgb(53, 162, 235)',
+                            backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                            tension: 0.1
+                        }
+                    ]
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching daily visit stats:", error);
+        }
+    };
+
+    const handleViewModeChange = (mode) => {
+        setViewMode(mode);
+    };
+
+    const handleYearChange = (year) => {
+        setSelectedYear(year);
+    };
+
+    const handleDateRangeChange = (dates) => {
+        if (dates && dates.length === 2) {
+            // Update Dayjs objects for DatePicker
+            setDateRangeDayjs(dates);
+
+            // Convert to JavaScript Date objects for internal use
+            setDateRange([
+                dates[0].toDate(),
+                dates[1].toDate()
+            ]);
+        }
+    };
+
+    // Generate year options
+    const currentYear = new Date().getFullYear();
+    const yearOptions = [];
+    for (let year = 2020; year <= currentYear; year++) {
+        yearOptions.push(year);
+    }
+
+    // Chart options
+    const chartOptions = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: true,
+                text: viewMode === 'monthly' ? 'Monthly Website Visits' : 'Daily Website Visits',
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Visits'
+                }
+            }
+        }
+    };
+
     return (
         <div className="dashboard d-flex flex-column px-5 m-5">
             <div className="title mb-4">Dashboard</div>
@@ -115,47 +229,42 @@ function Dashboard() {
                     <h1 className={"mb-3"}>{totals.requests}</h1>
                 </div>
             </div>
-            <div className="w-full max-w-2xl">
-                <h2 className="text-xl font-bold mb-4">Web Access Statistics</h2>
-                <div className="row">
-                    {/* Dropdown to select Monthly or Weekly */}
-                    <select
-                        className="mb-4 p-2 border rounded col-2 me-5"
-                        value={viewType}
-                        onChange={(e) => setViewType(e.target.value)}
-                    >
-                        <option value="monthly">Monthly</option>
-                        <option value="weekly">Weekly</option>
-                    </select>
 
-                    {/* Date Pickers for Weekly Mode */}
-                    {viewType === "weekly" && (
-                        <div className="mb-4 flex gap-4 col-5 ms-5">
-                            <RangePicker style={{ width: "100%" }} onChange={(dates) => {
-                                setStartDate(dates[0]);
-                                setEndDate(dates[1]);
-                            }}>
+            {/* Visit Statistics Section */}
+            <div className="visit-stats mb-5">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Website Visit Statistics</h2>
+                    <div className="chart-controls d-flex gap-3">
+                        <Select
+                            value={viewMode}
+                            onChange={handleViewModeChange}
+                            style={{ width: 120 }}
+                        >
+                            <Option value="monthly">By Month</Option>
+                            <Option value="daily">By Day</Option>
+                        </Select>
 
-                            </RangePicker>
-                        </div>
-                    )}
-                    <div>
-                        <Line className="mb-5" style={{ width: "90%", margin: "0 auto" }}
-                              data={{
-                                  labels: viewType === "monthly" ? monthlyLabels : weeklyLabels,
-                                  datasets: [
-                                      {
-                                          label: "Web Access",
-                                          data: viewType === "monthly" ? monthlyData : weeklyData,
-                                          borderColor: "rgba(255, 99, 132, 1)",
-                                          backgroundColor: "rgba(255, 99, 132, 0.2)",
-                                          borderWidth: 2,
-                                          pointRadius: 4,
-                                      },
-                                  ],
-                              }}
-                        />
+                        {viewMode === 'monthly' ? (
+                            <Select
+                                value={selectedYear}
+                                onChange={handleYearChange}
+                                style={{ width: 100 }}
+                            >
+                                {yearOptions.map(year => (
+                                    <Option key={year} value={year}>{year}</Option>
+                                ))}
+                            </Select>
+                        ) : (
+                            <RangePicker
+                                value={dateRangeDayjs}
+                                onChange={handleDateRangeChange}
+                            />
+                        )}
                     </div>
+                </div>
+
+                <div className="chart-container mx-auto py-4 bg-white rounded shadow" style={{ width: "90%"}}>
+                    <Line options={chartOptions} data={chartData} />
                 </div>
             </div>
         </div>

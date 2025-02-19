@@ -53,6 +53,19 @@ const Dashboard = () => {
     }, [userInfo]);
 
     useEffect(() => {
+        const fetchYearlyData = async (year) => {
+            try {
+                const response = await fetch(`http://localhost:3001/api/visit/monthly-stats?year=${year}`);
+                const result = await response.json();
+                if (result.statusCode === 200) {
+                    console.log(result.data);
+                } else {
+                    console.error("Error fetching yearly data");
+                }
+            } catch (error) {
+                console.error("Error fetching yearly data:", error);
+            }
+        }
         if (userInfo && userInfo.hotel === undefined) {
             dispatch(doGetAccount());
         }

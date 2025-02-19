@@ -98,7 +98,7 @@ const Reserve = () => {
                         return {
                             ...item,
                             id: item.discount_id,
-                            minAmount: item.min_amount || 0,
+                            minAmount: item.discount_minAmount || 0,
                             description: description || "",
                             code: item.discount_code || "",
                             discount: item.discount_value || 0,

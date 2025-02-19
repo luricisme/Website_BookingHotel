@@ -1,224 +1,224 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { CreateBookingDto } from './dto/create-booking.dto';
-import { UpdateBookingDto } from './dto/update-booking.dto';
-import { ChildEntity, Repository } from 'typeorm';
-import { Booking } from './entities/booking.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Hotel } from '../hotel/entities/hotel.entity';
-import { Room } from '../room/entities/room.entity';
-import { RoomType } from '../room_type/entites/room_type.entity';
-import { MinioService } from '@/minio/minio.service';
-import { User } from '../user/entities/user.entity';
-import { query, Request, Response } from 'express';
-import { BookingDetail } from '../booking_detail/entities/booking_detail.entity';
-import { BookingRoom } from '../booking_room/entities/booking_room.entity';
-import { Payment } from '../payment/entities/payment.entity';
-import { Discount } from '../discount/entities/discount.entity';
-import axios from 'axios';
-import * as crypto from 'crypto';
-import { RedisService } from '../../redis/redis.service';
-import { Cron } from '@nestjs/schedule';
-import { AddInformationDto } from './dto/add-information.dto';
-import { DataSource, QueryRunner } from 'typeorm';
-import { MailService } from '@/mail/mail.service';
-import * as moment from 'moment-timezone';
+import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
+import { CreateBookingDto } from "./dto/create-booking.dto";
+import { UpdateBookingDto } from "./dto/update-booking.dto";
+import { ChildEntity, Repository } from "typeorm";
+import { Booking } from "./entities/booking.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Hotel } from "../hotel/entities/hotel.entity";
+import { Room } from "../room/entities/room.entity";
+import { RoomType } from "../room_type/entites/room_type.entity";
+import { MinioService } from "@/minio/minio.service";
+import { User } from "../user/entities/user.entity";
+import { query, Request, Response } from "express";
+import { BookingDetail } from "../booking_detail/entities/booking_detail.entity";
+import { BookingRoom } from "../booking_room/entities/booking_room.entity";
+import { Payment } from "../payment/entities/payment.entity";
+import { Discount } from "../discount/entities/discount.entity";
+import axios from "axios";
+import * as crypto from "crypto";
+import { RedisService } from "../../redis/redis.service";
+import { Cron } from "@nestjs/schedule";
+import { AddInformationDto } from "./dto/add-information.dto";
+import { DataSource, QueryRunner } from "typeorm";
+import { MailService } from "@/mail/mail.service";
 
 @Injectable()
 export class BookingService {
-  constructor(
-    @InjectRepository(Booking)
-    private readonly bookingRepository: Repository<Booking>,
+    constructor(
+        @InjectRepository(Booking)
+        private readonly bookingRepository: Repository<Booking>,
 
-    @InjectRepository(BookingDetail)
-    private readonly bookingDetailRepository: Repository<BookingDetail>,
+        @InjectRepository(BookingDetail)
+        private readonly bookingDetailRepository: Repository<BookingDetail>,
 
-    @InjectRepository(BookingRoom)
-    private readonly bookingRoomRepository: Repository<BookingRoom>,
+        @InjectRepository(BookingRoom)
+        private readonly bookingRoomRepository: Repository<BookingRoom>,
 
-    @InjectRepository(Hotel)
-    private readonly hotelRepository: Repository<Hotel>,
+        @InjectRepository(Hotel)
+        private readonly hotelRepository: Repository<Hotel>,
 
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
 
-    @InjectRepository(Room)
-    private readonly roomRepository: Repository<Room>,
+        @InjectRepository(Room)
+        private readonly roomRepository: Repository<Room>,
 
-    @InjectRepository(Payment)
-    private readonly paymentRepository: Repository<Payment>,
+        @InjectRepository(Payment)
+        private readonly paymentRepository: Repository<Payment>,
 
-    @InjectRepository(Discount)
-    private readonly discountRepository: Repository<Discount>,
+        @InjectRepository(Discount)
+        private readonly discountRepository: Repository<Discount>,
 
-    @InjectRepository(RoomType)
-    private readonly roomTypeRepository: Repository<RoomType>,
+        @InjectRepository(RoomType)
+        private readonly roomTypeRepository: Repository<RoomType>,
 
-    private readonly minioService: MinioService,
+        private readonly minioService: MinioService,
 
-    private readonly redisService: RedisService,
+        private readonly redisService: RedisService,
 
-    private readonly dataSource: DataSource,
+        private readonly dataSource: DataSource,
 
-    private mailService: MailService,
-  ) { }
+        private mailService: MailService
+    ) {}
 
-  // Bắt đầu quá trình booking
-  async create(
-    createBookingDto: CreateBookingDto,
-  ) {
-    try {
-      const {
-        hotelId,
-        checkInDate,
-        checkOutDate,
-        roomType2, // Số lượng phòng 2
-        roomType4, // Số lượng phòng 4
-        userId,
-      } = createBookingDto;
+    // Bắt đầu quá trình booking
+    async create(createBookingDto: CreateBookingDto) {
+        try {
+            const {
+                hotelId,
+                checkInDate,
+                checkOutDate,
+                roomType2, // Số lượng phòng 2
+                roomType4, // Số lượng phòng 4
+                userId,
+            } = createBookingDto;
 
-      const hotelQuery = await this.hotelRepository
-        .createQueryBuilder('hotel')
-        .select([
-          'hotel.name AS name'
-        ])
-        .where('hotel.id = :hotelId', { hotelId })
-      const hotel = await hotelQuery.getRawOne();
-      const hotelName = hotel.name;
-      // Lấy ra danh sách phòng đang trống của khách sạn
-      const availableRoomQuery = await this.roomRepository
-        .createQueryBuilder('room')
-        .leftJoin('room.hotel', 'hotel')
-        .select([
-          'room.id AS id',
-          'room.name AS name',
-          'room.type AS type',
-          'room.status AS status',
-          'room.hotelId AS hotelid',
-        ])
-        .where('hotel.id = :hotelId', { hotelId })
-        .andWhere('room.status = :status', { status: 'available' });
-      const availableRoom = await availableRoomQuery.getRawMany();
-      console.log('AVAILABLE ROOMS: ', availableRoom);
+            const hotelQuery = await this.hotelRepository
+                .createQueryBuilder("hotel")
+                .select(["hotel.name AS name"])
+                .where("hotel.id = :hotelId", { hotelId });
+            const hotel = await hotelQuery.getRawOne();
+            const hotelName = hotel.name;
+            // Lấy ra danh sách phòng đang trống của khách sạn
+            const availableRoomQuery = await this.roomRepository
+                .createQueryBuilder("room")
+                .leftJoin("room.hotel", "hotel")
+                .select([
+                    "room.id AS id",
+                    "room.name AS name",
+                    "room.type AS type",
+                    "room.status AS status",
+                    "room.hotelId AS hotelid",
+                ])
+                .where("hotel.id = :hotelId", { hotelId })
+                .andWhere("room.status = :status", { status: "available" });
+            const availableRoom = await availableRoomQuery.getRawMany();
+            console.log("AVAILABLE ROOMS: ", availableRoom);
 
-      // Lấy ra danh sách phòng đang được đặt nhưng có ngày không trùng với lại ngày đặt của người khác
-      const canBookingQuery = await this.bookingRepository
-        .createQueryBuilder('booking')
-        .leftJoin('booking.bookingRooms', 'bookingRoom')
-        .leftJoin('bookingRoom.room', 'room')
-        .where('booking.hotelId = :hotelId', { hotelId })
-        .andWhere(
-          '(booking.checkinTime >= :checkOutDate OR booking.checkoutTime <= :checkInDate)',
-          {
-            checkInDate,
-            checkOutDate,
-          },
-        )
-        .select([
-          'room.id AS id',
-          'room.name AS name',
-          'room.type AS type',
-          'room.status AS status',
-          'room.hotelId AS hotelid',
-        ]);
+            // Lấy ra danh sách phòng đang được đặt nhưng có ngày không trùng với lại ngày đặt của người khác
+            const canBookingQuery = await this.bookingRepository
+                .createQueryBuilder("booking")
+                .leftJoin("booking.bookingRooms", "bookingRoom")
+                .leftJoin("bookingRoom.room", "room")
+                .where("booking.hotelId = :hotelId", { hotelId })
+                .andWhere(
+                    "(booking.checkinTime >= :checkOutDate OR booking.checkoutTime <= :checkInDate)",
+                    {
+                        checkInDate,
+                        checkOutDate,
+                    }
+                )
+                .select([
+                    "room.id AS id",
+                    "room.name AS name",
+                    "room.type AS type",
+                    "room.status AS status",
+                    "room.hotelId AS hotelid",
+                ]);
 
-      const canBooking = await canBookingQuery.getRawMany();
-      // console.log('CAN BOOKING: ', canBooking);
-      const rooms = [...availableRoom, ...canBooking];
-      // console.log('ALL AVAILABLE ROOMS: ', rooms);
-      // Lấy ra phòng loại 2 và 4
-      const roomsType2 = rooms.filter((room) => room.type === 2);
-      const roomsType4 = rooms.filter((room) => room.type === 4);
+            const canBooking = await canBookingQuery.getRawMany();
+            // console.log('CAN BOOKING: ', canBooking);
+            const rooms = [...availableRoom, ...canBooking];
+            // console.log('ALL AVAILABLE ROOMS: ', rooms);
+            // Lấy ra phòng loại 2 và 4
+            const roomsType2 = rooms.filter((room) => room.type === 2);
+            const roomsType4 = rooms.filter((room) => room.type === 4);
 
-      const getRandomRooms = (roomsList: any[], count: number) => {
-        const shuffled = roomsList.sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, count);
-      };
-      // Lấy random ra số lượng phòng cho khách hàng
-      const randomRoomsType2 = getRandomRooms(roomsType2, roomType2);
-      const randomRoomsType4 = getRandomRooms(roomsType4, roomType4);
-      const selectedRooms = [...randomRoomsType2, ...randomRoomsType4];
-      // console.log('SELECTED ROOMS: ', selectedRooms);
+            const getRandomRooms = (roomsList: any[], count: number) => {
+                const shuffled = roomsList.sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, count);
+            };
+            // Lấy random ra số lượng phòng cho khách hàng
+            const randomRoomsType2 = getRandomRooms(roomsType2, roomType2);
+            const randomRoomsType4 = getRandomRooms(roomsType4, roomType4);
+            const selectedRooms = [...randomRoomsType2, ...randomRoomsType4];
+            // console.log('SELECTED ROOMS: ', selectedRooms);
 
-      const roomIds = selectedRooms.map((room) => room.id);
-      if (!roomIds || roomIds.length === 0) {
-        throw new BadRequestException('No room IDs provided');
-      }
-      await this.roomRepository
-        .createQueryBuilder()
-        .update()
-        .set({ status: 'pending' })
-        .where('id IN (:...roomIds)', { roomIds })
-        .execute();
+            const roomIds = selectedRooms.map((room) => room.id);
+            if (!roomIds || roomIds.length === 0) {
+                throw new BadRequestException("No room IDs provided");
+            }
+            await this.roomRepository
+                .createQueryBuilder()
+                .update()
+                .set({ status: "pending" })
+                .where("id IN (:...roomIds)", { roomIds })
+                .execute();
 
-      // Query roomType để lấy ra giá tiền và tính toán giá tiền 
-      const roomTypeQuery = await this.roomTypeRepository
-        .createQueryBuilder('roomType')
-        .select(['roomType.type AS type',
-          'roomType.price AS price',
-          'roomType.weekend_price AS weekend_price'])
-        .where('roomType.hotelId = :hotelId', { hotelId })
-      const roomType = await roomTypeQuery.getRawMany();
-      // console.log('ROOMTYPE: ', roomType);
+            // Query roomType để lấy ra giá tiền và tính toán giá tiền
+            const roomTypeQuery = await this.roomTypeRepository
+                .createQueryBuilder("roomType")
+                .select([
+                    "roomType.type AS type",
+                    "roomType.price AS price",
+                    "roomType.weekend_price AS weekend_price",
+                ])
+                .where("roomType.hotelId = :hotelId", { hotelId });
+            const roomType = await roomTypeQuery.getRawMany();
+            // console.log('ROOMTYPE: ', roomType);
 
-      const room4 = roomType.filter(room => room.type === 4)[0] || null;
-      // console.log('ROOM4: ', room4);
-      const room2 = roomType.filter(room => room.type === 2)[0] || null;
-      // console.log('ROOM2: ', room2);
+            const room4 = roomType.filter((room) => room.type === 4)[0] || null;
+            // console.log('ROOM4: ', room4);
+            const room2 = roomType.filter((room) => room.type === 2)[0] || null;
+            // console.log('ROOM2: ', room2);
 
-      const totalRoom2 = await this.calculateTotalPrice(room2, roomType2, checkInDate, checkOutDate);
-      // console.log('TOTAL ROOM 2: ', totalRoom2);
-      const totalRoom4 = await this.calculateTotalPrice(room4, roomType4, checkInDate, checkOutDate);
-      // console.log('TOTAL ROOM 4: ', totalRoom4);
-      const sumPrice = totalRoom2 + totalRoom4;
+            const totalRoom2 = await this.calculateTotalPrice(
+                room2,
+                roomType2,
+                checkInDate,
+                checkOutDate
+            );
+            // console.log('TOTAL ROOM 2: ', totalRoom2);
+            const totalRoom4 = await this.calculateTotalPrice(
+                room4,
+                roomType4,
+                checkInDate,
+                checkOutDate
+            );
+            // console.log('TOTAL ROOM 4: ', totalRoom4);
+            const sumPrice = totalRoom2 + totalRoom4;
 
-      const bookingData = {
-        hotelId,
-        hotelName,
-        userId,
-        checkInDate,
-        checkOutDate,
-        roomType2,
-        type2Price: room2.price,
-        type2WeekendPrice: room2.weekend_price,
-        roomType4,
-        type4Price: room4.price,
-        type4WeekendPrice: room4.weekend_price,
-        sumPrice,
-        rooms: selectedRooms,
-        createdAt: Date.now(),
-      };
-      await this.redisService.set(`bookingData:${userId}`, bookingData, 300);
+            const bookingData = {
+                hotelId,
+                hotelName,
+                userId,
+                checkInDate,
+                checkOutDate,
+                roomType2,
+                type2Price: room2.price,
+                type2WeekendPrice: room2.weekend_price,
+                roomType4,
+                type4Price: room4.price,
+                type4WeekendPrice: room4.weekend_price,
+                sumPrice,
+                rooms: selectedRooms,
+                createdAt: Date.now(),
+            };
+            await this.redisService.set(`bookingData:${userId}`, bookingData, 300);
 
-      const oldState = {
-        hotelId,
-        availableRoom,
-        canBooking,
-      };
-      await this.redisService.set(`oldState:${userId}`, oldState, 360);
+            const oldState = {
+                hotelId,
+                availableRoom,
+                canBooking,
+            };
+            await this.redisService.set(`oldState:${userId}`, oldState, 360);
 
-      return {
-        message: 'Booking data and old state saved to redis',
-        bookingData,
-      };
-    } catch (error) {
-      console.error('Error booking hotels:', error);
+            return {
+                message: "Booking data and old state saved to redis",
+                bookingData,
+            };
+        } catch (error) {
+            console.error("Error booking hotels:", error);
 
-      throw new HttpException(
-        {
-          status_code: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'Internal server error',
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+            throw new HttpException(
+                {
+                    status_code: HttpStatus.INTERNAL_SERVER_ERROR,
+                    message: "Internal server error",
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
     }
-  }
 
   // Tính toán tổng giá tiền 
   private async calculateTotalPrice(room, numRooms, checkInDate, checkOutDate) {
@@ -1297,44 +1297,26 @@ export class BookingService {
     }
   }
 
-  async totalcheckOut(id: number) {
-    try {
-      const today = new Date();
-      const todayDate = today.toISOString().split('T')[0];
+    async totalcheckOut(id: number) {
+        try {
+            const today = new Date();
+            const todayDate = today.toISOString().split("T")[0];
 
-      const count = await this.bookingRepository
-        .createQueryBuilder('booking')
-        .leftJoin('booking.hotel', 'hotel')
-        .where('booking.hotelId = :hotelId', { hotelId: id })
-        .andWhere('hotel.status = :status', { status: 'booked' })
-        .andWhere('DATE(booking.checkoutTime) = :today', { today: todayDate })
-        .getCount();
+            const count = await this.bookingRepository
+                .createQueryBuilder("booking")
+                .leftJoin("booking.hotel", "hotel")
+                .where("booking.hotelId = :hotelId", { hotelId: id })
+                .andWhere("hotel.status = :status", { status: "booked" })
+                .andWhere("DATE(booking.checkoutTime) = :today", { today: todayDate })
+                .getCount();
 
-      return {
-        status: 200,
-        hotelId: id,
-        total: count,
-      };
-    } catch (error) {
-      throw new Error(`Error fetching total occupied rooms: ${error.message}`);
+            return {
+                status: 200,
+                hotelId: id,
+                total: count,
+            };
+        } catch (error) {
+            throw new Error(`Error fetching total occupied rooms: ${error.message}`);
+        }
     }
-  }
-
-  async monthlyRevenue(hotelId: number) {
-    try {
-      const rawReports = await this.bookingRepository.createQueryBuilder("b")
-                      .select("DATE_TRUNC('month', b.createdAt)", "month")
-                      .addSelect("SUM(b.price)", "revenue")
-                      .where("EXTRACT(month FROM b.createdAt) BETWEEN :startMonth AND :endMonth", {startMonth: 1, endMonth: 12})
-                      .andWhere("b.hotelId = :hotelId", {hotelId})
-                      .andWhere("b.status = 'completed'")
-                      .groupBy("DATE_TRUNC('month', b.createdAt)")
-                      .orderBy("DATE_TRUNC('month', b.createdAt)")
-                      .getRawMany();
-      const reports = rawReports.map(r => ({...r, month: moment(r.month).tz('Asia/Ho_Chi_Minh').format("YYYY-MM")}));
-      return reports;
-    } catch (error) {
-      throw new InternalServerErrorException;
-    }
-  }
 }

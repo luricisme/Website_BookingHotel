@@ -139,11 +139,17 @@ const RoomType = () => {
             title: "Price",
             dataIndex: "roomPrice",
             key: "roomPrice",
+            render: (text) => {
+                return `${Number(text).toLocaleString()}`;
+            },
         },
         {
             title: "Weekend Price",
             dataIndex: "roomWeekendPrice",
             key: "roomWeekendPrice",
+            render: (text) => {
+                return `${Number(text).toLocaleString()}`;
+            },
         },
         {
             title: "Flexible Price",
@@ -151,7 +157,7 @@ const RoomType = () => {
             key: "roomFlexiblePrice",
             render: (text, record) => (
                 <Space>
-                    <span>{text}</span>
+                    <span>{Number(text).toLocaleString()}</span>
                     <Checkbox
                         checked={record.isFlexiblePriceEnabled}
                         onChange={(e) => handleFlexiblePriceChange(e.target.checked, record)}

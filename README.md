@@ -1,8 +1,8 @@
-# Booking Hotel
+# Booking Hotel 🏨
 ## Link: 
 
 ## Description
-Hotel Booking 🏨 is an online platform for hotel reservations, where users can search, explore details, read reviews, and book their ideal accommodations effortlessly.
+Booking Hotel 🏨 is an online platform for hotel reservations, where users can search, explore details, read reviews, and book their ideal accommodations effortlessly.
 
 **Users**: 
 - Search for hotels based on location, check-in/out dates, price, stars, and number of room types.
@@ -57,4 +57,16 @@ Use the following test account to explore the platform:
 
 ## Demo 📸
 ### User
-![Homepage](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740760595/Something/hotel_homepage1.png)
+![Homepage1](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740760595/Something/hotel_homepage1.png)
+![Homepage2](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740760763/Something/hotel_homepage2.png)
+![Search](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740761416/Something/hotel_search.png)
+![Detail1](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740761493/Something/hotel_detail1.png)
+![Detail2](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740761645/Something/hotel_detail2.png)
+
+### Hotelier
+![Dashboard](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740762028/Something/hotelier_dashboard.png)
+
+### Admin
+![Dashboard](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740762141/Something/admin_dashboard.png)
+
+

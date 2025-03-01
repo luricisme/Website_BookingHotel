@@ -25,6 +25,20 @@ Booking Hotel 🏨 is an online platform for hotel reservations, where users can
 - Manage hotels: Delete, view list and detail hotel information.
 - Manage requests: Handle requests from hoteliers.
 
+## Demo 📸
+### User
+![Homepage1](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740760595/Something/hotel_homepage1.png)
+![Homepage2](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740760763/Something/hotel_homepage2.png)
+![Search](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740761416/Something/hotel_search.png)
+![Detail1](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740761493/Something/hotel_detail1.png)
+![Detail2](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740761645/Something/hotel_detail2.png)
+
+### Hotelier
+![Dashboard](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740762028/Something/hotelier_dashboard.png)
+
+### Admin
+![Dashboard](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740762141/Something/admin_dashboard.png)
+
 ## Installation and Setup Instructions
 1. Clone down this repository. You will need `node` and `npm` installed globally on your machine.
 
@@ -54,19 +68,3 @@ Use the following test account to explore the platform:
 **Admin Account:**  
 📧 Email: `admin1@gmail.com`  
 🔑 Password: `123456Ad`
-
-## Demo 📸
-### User
-![Homepage1](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740760595/Something/hotel_homepage1.png)
-![Homepage2](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740760763/Something/hotel_homepage2.png)
-![Search](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740761416/Something/hotel_search.png)
-![Detail1](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740761493/Something/hotel_detail1.png)
-![Detail2](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740761645/Something/hotel_detail2.png)
-
-### Hotelier
-![Dashboard](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740762028/Something/hotelier_dashboard.png)
-
-### Admin
-![Dashboard](https://res.cloudinary.com/dykyxn2rc/image/upload/v1740762141/Something/admin_dashboard.png)
-
-
